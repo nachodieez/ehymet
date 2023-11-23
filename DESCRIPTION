@@ -2,9 +2,18 @@ Package: ehymet
 Title: Methodologies for functional data based on the epigraph and hypograph indexes
 Version: 0.0.0.9000
 Authors@R: 
-    person("Belen", "Pulido", , "belen.pulido@uc3m.es", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-2105-959X"))
-Description: What the package does (one paragraph).
+    person(given = "Belen", family = "Pulido", role = c("aut", "cre"),
+    email = "belen.pulido@uc3m.es", comment = c(ORCID = "0000-0003-2105-959X"))
+Description: Implements a method for transforming a functional dataset in one or 
+  multiple dimension into a multivariate dataset. This transformation is achieved 
+  by applying the epigraph, hypograph, and their modified versions to both the 
+  original curves and their first and second derivatives. he calculation of 
+  indexes is adapted to the dimensionality of the functional dataset, with 
+  specialized considerations for dependencies between dimensions in the 
+  multidimensional case. This approach facilitates the extension of traditional 
+  multivariate data analysis techniques to the functional setting. A key 
+  application of this package is the EHyClus method which extends clustering 
+  analysis for functional data in one or multiple dimension.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -15,4 +24,6 @@ Config/testthat/edition: 3
 URL: https://github.com/bpulidob/ehymet
 BugReports: https://github.com/bpulidob/ehymet/issues
 Imports: 
-    fda
+    fda,
+    kernlab,
+    SwarmSVM

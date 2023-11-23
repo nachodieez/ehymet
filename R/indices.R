@@ -141,11 +141,16 @@ mulMHI <- function(curves) {
   return (index/(n_curves*l_curves))
 }
 
-ind_df <- function(curves, t, rangeval, nbasis, norder,
+ind <- function(curves, t, rangeval, nbasis, norder,
                      indices = c("EI", "HI", "MEI", "MHI"), ...){
 
   # Check the curves dimension
   curves_dim <- length(dim(curves))
+
+  # Check indices names
+  if(!all(indices %in% c("EI", "HI", "MEI", "MHI"))){
+    stop("Indices should be one or more of the following: EI, HI, MEI, MHI")
+  }
 
   if(curves_dim == 2) indices2 <- indices
   else if(curves_dim == 3) indices2 <- paste0("mul", indices)
