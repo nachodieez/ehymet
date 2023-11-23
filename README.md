@@ -18,13 +18,13 @@ or multiple dimension.
 
 - Belén Pulido, Alba M. Franco-Pereira, Rosa E. Lillo (2023). “A fast
   epigraph and hypograph-based approach for clustering functional data.”
-  *Statistics and Computing*, **33**, 36.
-  <doi:https://doi.org/10.1007/s11222-023-10213-7>
+  *Statistics and Computing*, **33**, 36. doi:
+  [10.1007/s11222-023-10213-7](https://doi.org/10.1007/s11222-023-10213-7)
 
 - Belén Pulido, Alba M. Franco-Pereira, Rosa E. Lillo (2023). “The
   epigraph and the hypograph indexes as useful tools for clustering
-  multivariate functional data.”
-  <doi:https://doi.org/10.48550/arXiv.2307.16720>
+  multivariate functional data.” doi:
+  [10.48550/arXiv.2307.16720](https://doi.org/10.48550/arXiv.2307.16720)
 
 ## Installation
 
