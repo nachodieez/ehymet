@@ -26,4 +26,6 @@ BugReports: https://github.com/bpulidob/ehymet/issues
 Imports: 
     fda,
     kernlab,
-    SwarmSVM
+    SwarmSVM,
+    dplyr,
+    MASS

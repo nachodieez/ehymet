@@ -42,7 +42,8 @@ represents the number of dimensions in the data}
 one or more between EI, HI, MEI, MHI. Depending on the dimension on the data
 they are calculated for one or multiple dimension}
 
-\item{l_method_hierarch}{List of clustering methods for hierarchical clustering}
+\item{l_method_hierarch}{List of clustering methods for hierarchical
+clustering}
 
 \item{l_dist_hierarch}{List of distances for hierarchical clustering}
 

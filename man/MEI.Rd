@@ -14,7 +14,8 @@ represents values along the curve.}
 Return a numeric vector containing the MEI for each curve
 }
 \description{
-The Modified Epigraph Index of a curve x is one minus the proportion of "time"
+The Modified Epigraph Index of a curve x is one minus the proportion of
+"time"
 the curves in the sample are above x
 }
 \examples{

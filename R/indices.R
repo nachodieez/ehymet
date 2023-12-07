@@ -1,6 +1,7 @@
 #' Epigraph Index (EI) for a univariate functional dataset.
 #'
-#' The Epigraph Index of a curve x is one minus the proportion of curves in the sample
+#' The Epigraph Index of a curve x is one minus the proportion of curves
+#' in the sample
 #' that are above x.
 #'
 #' @param curves A matrix where each row represents a curve, and each column
@@ -46,7 +47,8 @@ HI <- function(curves){
 
 #' Modified Epigraph Index (MEI) for a univariate functional dataset.
 #'
-#' The Modified Epigraph Index of a curve x is one minus the proportion of "time"
+#' The Modified Epigraph Index of a curve x is one minus the proportion of
+#' "time"
 #' the curves in the sample are above x
 #'
 #' @param curves A matrix where each row represents a curve, and each column
@@ -174,7 +176,8 @@ ind <- function(curves, t, rangeval, nbasis, norder,
     deriv2_result <- get(indices2[i])(fun_data$deriv2)
 
     ind_data <- cbind(ind_data,
-                      stats::setNames(data.frame(smooth_result, deriv_result, deriv2_result),
+                      stats::setNames(data.frame(smooth_result, deriv_result,
+                                                 deriv2_result),
                                c(smooth_col, deriv_col, deriv2_col)))
   }
 

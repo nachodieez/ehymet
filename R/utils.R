@@ -1,19 +1,19 @@
-#' Title
+#' Smooth data and calculate first and second derivatives
 #'
-#' @param curves
-#' @param t
-#' @param rangeval
-#' @param nbasis
-#' @param norder
-#' @param ...
+#' @param curves A matrix where each row represents a curve, and each column
+#' represents values along the curve.
+#' @param t Grid
+#' @param nbasis Number of basis for the B-splines
+#' @param norder Order of the B-splines
+#' @param ... Additional arguments (unused)
 #'
-#' @return
+#' @return A list containing smoothed data, first and second derivatives
 #' @noRd
 #'
-#' @examples
 funspline <- function(curves, t, rangeval, nbasis, norder, ...){
   #Create B-spline basis
-  basisobj <- fda::create.bspline.basis(rangeval = rangeval, nbasis = nbasis, norder = norder, ...)
+  basisobj <- fda::create.bspline.basis(rangeval = rangeval, nbasis = nbasis,
+                                        norder = norder, ...)
 
   curves_dim <- length(dim(curves))
 
@@ -38,7 +38,8 @@ funspline <- function(curves, t, rangeval, nbasis, norder, ...){
 
     for(d in 1:dim(curves)[3]){
       # Smooth data using B-spline basis
-      ys <-  fda::smooth.basis(argvals = t, y = t(curves[,,d]), fdParobj = basisobj)
+      ys <-  fda::smooth.basis(argvals = t, y = t(curves[,,d]),
+                               fdParobj = basisobj)
 
       # Evaluate smoothed data and derivatives
       smooth[,,d] <- t(fda::eval.fd(t,ys$fd,0)) # smoothed data

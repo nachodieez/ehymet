@@ -2,7 +2,8 @@
 % Please edit documentation in R/clustering.R
 \name{clustInd_svc}
 \alias{clustInd_svc}
-\title{Perform support vector clustering for a different combinations of indexes and distance}
+\title{Perform support vector clustering for a different combinations of indexes
+and distance}
 \usage{
 clustInd_svc(
   ind_data,
@@ -14,7 +15,8 @@ clustInd_svc(
 )
 }
 \arguments{
-\item{ind_data}{Dataframe containing indexes applied to the main data and derivatives}
+\item{ind_data}{Dataframe containing indexes applied to the main data
+and derivatives}
 
 \item{vars_list}{List of characters representing variable sets for clustering}
 
@@ -22,7 +24,8 @@ clustInd_svc(
 
 \item{n_cluster}{Number of clusters to create}
 
-\item{true_labels}{Vector of true labels for validation (if it is not known true_labels is set to NULL)}
+\item{true_labels}{Vector of true labels for validation
+(if it is not known true_labels is set to NULL)}
 
 \item{...}{Additional arguments (unused)}
 }
@@ -30,5 +33,6 @@ clustInd_svc(
 A list containing kkmeans clustering results for each configuration
 }
 \description{
-Perform support vector clustering for a different combinations of indexes and distance
+Perform support vector clustering for a different combinations of indexes
+and distance
 }

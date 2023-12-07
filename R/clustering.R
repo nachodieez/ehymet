@@ -1,17 +1,21 @@
-#' Perform hierarchical clustering for a given combination of indexes, method and distance
+#' Perform hierarchical clustering for a given combination of indexes,
+#' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
 #' @param vars character vector of indexes names for clustering (e. g. vars1)
 #' @param method The agglomerative method to be used in hierarchical clustering
 #' @param dist The distance method to be used
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing clustering results and execution time.
 #' @noRd
 #'
-clustInd_hierarch_aux <- function(ind_data, vars, method ="single", dist ="euclidean",
-                                  n_cluster = 2, true_labels=NULL){
+clustInd_hierarch_aux <- function(ind_data, vars, method ="single",
+                                  dist ="euclidean", n_cluster = 2,
+                                  true_labels=NULL){
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
@@ -45,20 +49,27 @@ clustInd_hierarch_aux <- function(ind_data, vars, method ="single", dist ="eucli
   return(res)
 }
 
-#' Perform hierarchical clustering for a different combinations of indexes, method and distance
+#' Perform hierarchical clustering for a different combinations of indexes,
+#' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
-#' @param vars_list List of characters representing variable sets for clustering
+#' @param ind_data Dataframe containing indexes applied to the main data and
+#' derivatives
+#' @param vars_list List of characters representing variable sets for
+#' clustering
 #' @param method_list List of clustering methods
 #' @param dist_list List of distance metrics
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
-#' @return A list containing hierarchical clustering results for each configuration
+#' @return A list containing hierarchical clustering results
+#' for each configuration
 #' @export
 clustInd_hierarch <- function(ind_data, vars_list,
-                              method_list = c("single","complete","average","centroid","ward.D2"),
-                              dist_list = c("euclidean", "manhattan"), n_cluster=2, true_labels = NULL) {
+                              method_list = c("single","complete","average",
+                                              "centroid","ward.D2"),
+                              dist_list = c("euclidean", "manhattan"),
+                              n_cluster=2, true_labels = NULL) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
@@ -71,13 +82,16 @@ clustInd_hierarch <- function(ind_data, vars_list,
   }
 
   # Check if indices, methods and distances lists are provided
-  if (!is.character(vars_list) || !is.character(method_list) || !is.character(dist_list) ||
-      length(vars_list) == 0 || length(method_list) == 0 || length(dist_list) == 0) {
-    stop("Invalid 'method_list' or 'dist_list'. Both must be non-empty character vectors.")
+  if (!is.character(vars_list) || !is.character(method_list) ||
+      !is.character(dist_list) || length(vars_list) == 0 ||
+      length(method_list) == 0 || length(dist_list) == 0) {
+    stop("Invalid 'method_list' or 'dist_list'. Both must be non-empty
+         character vectors.")
   }
 
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, method = method_list, distance = dist_list)
+  parameter_combinations <- expand.grid(vars = vars_list, method = method_list,
+                                        distance = dist_list)
 
   cl_list <- list()
   tl_null <- is.null(true_labels)
@@ -87,13 +101,15 @@ clustInd_hierarch <- function(ind_data, vars_list,
   for(comb in 1:nrow(parameter_combinations)){
 
     # Apply hierarchical clustering to each combination
-    result <- clustInd_hierarch_aux(ind_data, as.character(parameter_combinations$vars[comb]),
+    result <- clustInd_hierarch_aux(ind_data,
+                                    as.character(parameter_combinations$vars[comb]),
                                     parameter_combinations$method[comb],
                                     parameter_combinations$distance[comb],
                                     n_cluster, true_labels)
     result_name <- paste("hierarch", parameter_combinations$method[comb],
                          parameter_combinations$distance[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])), collapse = ""),
+                         paste(get(as.character(parameter_combinations$vars[comb])),
+                               collapse = ""),
                          sep = "_")
     cl_list[[result_name]] <- result$cluster
 
@@ -134,17 +150,20 @@ kmeans_mahal <- function(ind_data, n_cluster){
   data_transform <- data_matrix %*% solve(c)
 
   #vector containing the clustering partition
-  km <- stats::kmeans(data_transform, centers=n_cluster, iter.max=1000, nstart=100)$cluster
+  km <- stats::kmeans(data_transform, centers=n_cluster, iter.max=1000,
+                      nstart=100)$cluster
   return(km)
 }
 
 #' Perform kmeans clustering for a given combination of indexes and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data and
+#' derivatives
 #' @param vars character vector of indexes names for clustering (e. g. vars1)
 #' @param dist The distance method to be used
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing clustering results and execution time.
 #' @noRd
@@ -169,7 +188,8 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
   t0 <- Sys.time()
 
   if(dist=="euclidean"){
-    clus <- stats::kmeans(ind_data[,get(vars)], centers = n_cluster, iter.max = 1000, nstart = 100)$cluster
+    clus <- stats::kmeans(ind_data[,get(vars)], centers = n_cluster,
+                          iter.max = 1000, nstart = 100)$cluster
   }else{
     clus <- kmeans_mahal(ind_data[,get(vars)], n_cluster)
   }
@@ -185,13 +205,16 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
   return(res)
 }
 
-#' Perform hierarchical clustering for a different combinations of indexes, method and distance
+#' Perform hierarchical clustering for a different combinations of indexes,
+#' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data and
+#' derivatives
 #' @param vars_list List of characters representing variable sets for clustering
 #' @param dist_list List of distance metrics
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing kmeans clustering results for each configuration
 #' @export
@@ -212,7 +235,8 @@ clustInd_kmeans <- function(ind_data, vars_list,
   # Check if indices and distances lists are provided
   if (!is.character(vars_list) || !is.character(dist_list) ||
       length(vars_list) == 0 || length(dist_list) == 0) {
-    stop("Invalid 'method_list' or 'dist_list'. Both must be non-empty character vectors.")
+    stop("Invalid 'method_list' or 'dist_list'.
+         Both must be non-empty character vectors.")
   }
 
   # Generate all the possible combinations of indices, methods and distances
@@ -226,12 +250,13 @@ clustInd_kmeans <- function(ind_data, vars_list,
   for(comb in 1:nrow(parameter_combinations)){
 
     # Apply kmeans to each combination
-    result <- clustInd_kmeans_aux(ind_data, as.character(parameter_combinations$vars[comb]),
+    result <- clustInd_kmeans_aux(ind_data,
+                                  as.character(parameter_combinations$vars[comb]),
                                   parameter_combinations$distance[comb],
                                   n_cluster, true_labels)
     result_name <- paste("kmeans", parameter_combinations$distance[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])), collapse = ""),
-                         sep = "_")
+                         paste(get(as.character(parameter_combinations$vars[comb])),
+                               collapse = ""), sep = "_")
     cl_list[[result_name]] <- result$cluster
 
     metrics_row <- result$time
@@ -249,18 +274,21 @@ clustInd_kmeans <- function(ind_data, vars_list,
 
   return(result_list)
 }
-#' Perform kernel kmeans clustering for a given combination of indexes and distance
+#' Perform kernel kmeans clustering for a given combination of indexes
+#' and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
 #' @param vars character vector of indexes names for clustering (e. g. vars1)
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing clustering results and execution time.
 #' @noRd
-clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
-                                 true_labels = NULL, ...){
+clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot",
+                                 n_cluster = 2, true_labels = NULL, ...){
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
@@ -273,7 +301,8 @@ clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 
   }
 
   t0 <- Sys.time()
-  kkmeans_out <- kernlab::kkmeans(as.matrix(ind_data[,get(vars)]), centers= n_cluster, kernel = kernel, ...)
+  kkmeans_out <- kernlab::kkmeans(as.matrix(ind_data[,get(vars)]),
+                                  centers= n_cluster, kernel = kernel, ...)
   clus <- kkmeans_out@.Data
   t1 <- Sys.time()
   t <- data.frame(difftime(t1,t0,'secs'))
@@ -287,18 +316,22 @@ clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 
   return(res)
 }
 
-#' Perform kernel kmeans clustering for a different combinations of indexes and kernel
+#' Perform kernel kmeans clustering for a different combinations of indexes
+#' and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data and
+#'  derivatives
 #' @param vars_list List of characters representing variable sets for clustering
 #' @param kernel_list List of kernels
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_kkmeans <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot"),
+clustInd_kkmeans <- function(ind_data, vars_list,
+                             kernel_list = c("rbfdot", "polydot"),
                              n_cluster=2, true_labels = NULL, ...) {
 
   # Check if input is a data frame
@@ -314,7 +347,8 @@ clustInd_kkmeans <- function(ind_data, vars_list, kernel_list = c("rbfdot", "pol
   # Check if indices and distances lists are provided
   if (!is.character(vars_list) || !is.character(kernel_list) ||
       length(vars_list) == 0 || length(kernel_list) == 0) {
-    stop("Invalid 'method_list' or 'kernel_list'. Both must be non-empty character vectors.")
+    stop("Invalid 'method_list' or 'kernel_list'.
+         Both must be non-empty character vectors.")
   }
 
   # Generate all the possible combinations of indices, methods and distances
@@ -328,12 +362,13 @@ clustInd_kkmeans <- function(ind_data, vars_list, kernel_list = c("rbfdot", "pol
   for(comb in 1:nrow(parameter_combinations)){
 
     # Apply kmeans to each combination
-    result <- clustInd_kkmeans_aux(ind_data, as.character(parameter_combinations$vars[comb]),
-                                  as.character(parameter_combinations$kernel[comb]),
-                                  n_cluster, true_labels, ...)
+    result <- clustInd_kkmeans_aux(ind_data,
+                                   as.character(parameter_combinations$vars[comb]),
+                                   as.character(parameter_combinations$kernel[comb]),
+                                   n_cluster, true_labels, ...)
     result_name <- paste("kkmeans", parameter_combinations$kernel[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])), collapse = ""),
-                         sep = "_")
+                         paste(get(as.character(parameter_combinations$vars[comb])),
+                               collapse = ""), sep = "_")
     cl_list[[result_name]] <- result$cluster
 
     metrics_row <- result$time
@@ -352,13 +387,16 @@ clustInd_kkmeans <- function(ind_data, vars_list, kernel_list = c("rbfdot", "pol
   return(result_list)
 }
 
-#' Perform support vector clustering for a given combination of indexes and kernel
+#' Perform support vector clustering for a given combination of indexes
+#' and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
 #' @param vars_list List of characters representing variable sets for clustering
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing clustering results and execution time.
 #' @noRd
@@ -382,7 +420,8 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
   r1 <- round(nrow_ind_data/n_cluster)
   r2 <- nrow_ind_data - (n_cluster-1) * r1
   y <-  c(rep(1:(n_cluster-1), each =r1), rep(n_cluster, r2))
-  clusterSVM_output <- SwarmSVM::clusterSVM(ind_data[,get(vars)], y, n_cluster, cluster.method=method, ...)
+  clusterSVM_output <- SwarmSVM::clusterSVM(ind_data[,get(vars)], y, n_cluster,
+                                            cluster.method=method, ...)
   clus <- clusterSVM_output$label
 
   t1 <- Sys.time()
@@ -397,18 +436,22 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
   return(res)
 }
 
-#' Perform support vector clustering for a different combinations of indexes and distance
+#' Perform support vector clustering for a different combinations of indexes
+#' and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
 #' @param vars_list List of characters representing variable sets for clustering
 #' @param method_list List of methods
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_svc <- function(ind_data, vars_list, method_list = c("kmeans", "kernkmeans"),
+clustInd_svc <- function(ind_data, vars_list,
+                         method_list = c("kmeans", "kernkmeans"),
                          n_cluster = 2, true_labels = NULL, ...) {
 
   # Check if input is a data frame
@@ -424,7 +467,8 @@ clustInd_svc <- function(ind_data, vars_list, method_list = c("kmeans", "kernkme
   # Check if indices and distances lists are provided
   if (!is.character(vars_list) || !is.character(method_list) ||
       length(vars_list) == 0 || length(method_list) == 0) {
-    stop("Invalid 'method_list' or 'method_list'. Both must be non-empty character vectors.")
+    stop("Invalid 'method_list' or 'method_list'.
+         Both must be non-empty character vectors.")
   }
 
   # Generate all the possible combinations of indices, methods and distances
@@ -438,11 +482,13 @@ clustInd_svc <- function(ind_data, vars_list, method_list = c("kmeans", "kernkme
   for(comb in 1:nrow(parameter_combinations)){
 
     # Apply svc to each combination
-    result <- clustInd_svc_aux(ind_data, as.character(parameter_combinations$vars[comb]),
-                                   as.character(parameter_combinations$method[comb]),
-                                   n_cluster, true_labels, ...)
+    result <- clustInd_svc_aux(ind_data,
+                               as.character(parameter_combinations$vars[comb]),
+                               as.character(parameter_combinations$method[comb]),
+                               n_cluster, true_labels, ...)
     result_name <- paste("svc", parameter_combinations$method[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])), collapse = ""),
+                         paste(get(as.character(parameter_combinations$vars[comb])),
+                               collapse = ""),
                          sep = "_")
     cl_list[[result_name]] <- result$cluster
 
@@ -464,11 +510,14 @@ clustInd_svc <- function(ind_data, vars_list, method_list = c("kmeans", "kernkme
 
 #' Perform spectral clustering for a given combination of indexes and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
-#' @param vars Character vector of indexes names for clustering (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
+#' @param vars Character vector of indexes names for clustering
+#' (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #'
 #' @return A list containing clustering results and execution time.
 #' @noRd
@@ -489,7 +538,8 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
 
   # create target variable
   nrow_ind_data <- nrow(ind_data)
-  specc_output <- kernlab::specc(as.matrix(ind_data[,get(vars)]), centers = n_cluster,  kernel = kernel, ...)
+  specc_output <- kernlab::specc(as.matrix(ind_data[,get(vars)]),
+                                 centers = n_cluster,  kernel = kernel, ...)
   clus <- specc_output@.Data
 
   t1 <- Sys.time()
@@ -504,18 +554,22 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
   return(res)
 }
 
-#' Perform spectral clustering for a different combinations of indexes and kernels
+#' Perform spectral clustering for a different combinations of indexes
+#' and kernels
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and derivatives
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
 #' @param vars_list List of characters representing variable sets for clustering
 #' @param kernel_list List of kernels
 #' @param n_cluster Number of clusters to create
-#' @param true_labels Vector of true labels for validation (if it is not known true_labels is set to NULL)
+#' @param true_labels Vector of true labels for validation
+#' (if it is not known true_labels is set to NULL)
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_spc <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot"),
+clustInd_spc <- function(ind_data, vars_list,
+                         kernel_list = c("rbfdot", "polydot"),
                          n_cluster = 2, true_labels = NULL, ...) {
 
   # Check if input is a data frame
@@ -531,7 +585,8 @@ clustInd_spc <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot
   # Check if indices and distances lists are provided
   if (!is.character(vars_list) || !is.character(kernel_list) ||
       length(vars_list) == 0 || length(kernel_list) == 0) {
-    stop("Invalid 'method_list' or 'method_list'. Both must be non-empty character vectors.")
+    stop("Invalid 'method_list' or 'method_list'.
+         Both must be non-empty character vectors.")
   }
 
   # Generate all the possible combinations of indices, methods and distances
@@ -545,11 +600,13 @@ clustInd_spc <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot
   for(comb in 1:nrow(parameter_combinations)){
 
     # Apply spc to each combination
-    result <- clustInd_spc_aux(ind_data, as.character(parameter_combinations$vars[comb]),
+    result <- clustInd_spc_aux(ind_data,
+                               as.character(parameter_combinations$vars[comb]),
                                as.character(parameter_combinations$kernel[comb]),
                                n_cluster, true_labels, ...)
     result_name <- paste("spc", parameter_combinations$kernel[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])), collapse = ""), sep = "_")
+                         paste(get(as.character(parameter_combinations$vars[comb])),
+                               collapse = ""), sep = "_")
     cl_list[[result_name]] <- result$cluster
 
     metrics_row <- result$time
@@ -585,7 +642,8 @@ clustInd_spc <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot
 #' one or more between EI, HI, MEI, MHI. Depending on the dimension on the data
 #' they are calculated for one or multiple dimension
 #' @param vars_list List of characters representing variable sets for clustering
-#' @param l_method_hierarch List of clustering methods for hierarchical clustering
+#' @param l_method_hierarch List of clustering methods for hierarchical
+#' clustering
 #' @param l_dist_hierarch List of distances for hierarchical clustering
 #' @param l_dist_kmeans List of distances for kmeans clustering
 #' @param l_kernel List of kernels
@@ -602,10 +660,12 @@ clustInd_spc <- function(ind_data, vars_list, kernel_list = c("rbfdot", "polydot
 #'
 EHyClus <- function(curves, t, vars_list, nbasis = 30, norder = 4,
                     indices = c("EI", "HI", "MEI", "MHI"),
-                    l_method_hierarch = c("single","complete","average","centroid","ward.D2"),
+                    l_method_hierarch = c("single","complete","average",
+                                          "centroid","ward.D2"),
                     l_dist_hierarch = c("euclidean", "manhattan"),
                     l_dist_kmeans =  c("euclidean", "mahalanobis"),
-                    l_kernel = c("rbfdot", "polydot"), l_method_svc = c("kmeans", "kernkmeans"),
+                    l_kernel = c("rbfdot", "polydot"),
+                    l_method_svc = c("kmeans", "kernkmeans"),
                     n_clusters = 2, true_labels = NULL, ...){
 
   # Check all elements in vars_list are characters
@@ -623,8 +683,10 @@ EHyClus <- function(curves, t, vars_list, nbasis = 30, norder = 4,
 
     # Hierarchical clustering
   cl_hierarch <- clustInd_hierarch(ind_data = ind_curves, vars_list = vars_list,
-                                   method_list = l_method_hierarch, dist_list = l_dist_hierarch,
-                                   n_cluster = n_clusters, true_labels = true_labels)
+                                   method_list = l_method_hierarch,
+                                   dist_list = l_dist_hierarch,
+                                   n_cluster = n_clusters,
+                                   true_labels = true_labels)
 
   # kmeans
   cl_kmeans <- clustInd_kmeans(ind_data = ind_curves, vars_list = vars_list,

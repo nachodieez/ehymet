@@ -2,7 +2,8 @@
 % Please edit documentation in R/clustering.R
 \name{clustInd_hierarch}
 \alias{clustInd_hierarch}
-\title{Perform hierarchical clustering for a different combinations of indexes, method and distance}
+\title{Perform hierarchical clustering for a different combinations of indexes,
+method and distance}
 \usage{
 clustInd_hierarch(
   ind_data,
@@ -14,9 +15,11 @@ clustInd_hierarch(
 )
 }
 \arguments{
-\item{ind_data}{Dataframe containing indexes applied to the main data and derivatives}
+\item{ind_data}{Dataframe containing indexes applied to the main data and
+derivatives}
 
-\item{vars_list}{List of characters representing variable sets for clustering}
+\item{vars_list}{List of characters representing variable sets for
+clustering}
 
 \item{method_list}{List of clustering methods}
 
@@ -24,11 +27,14 @@ clustInd_hierarch(
 
 \item{n_cluster}{Number of clusters to create}
 
-\item{true_labels}{Vector of true labels for validation (if it is not known true_labels is set to NULL)}
+\item{true_labels}{Vector of true labels for validation
+(if it is not known true_labels is set to NULL)}
 }
 \value{
-A list containing hierarchical clustering results for each configuration
+A list containing hierarchical clustering results
+for each configuration
 }
 \description{
-Perform hierarchical clustering for a different combinations of indexes, method and distance
+Perform hierarchical clustering for a different combinations of indexes,
+method and distance
 }

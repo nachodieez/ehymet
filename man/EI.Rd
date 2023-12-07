@@ -14,7 +14,8 @@ represents values along the curve.}
 Return a numeric vector containing the EI for each curve
 }
 \description{
-The Epigraph Index of a curve x is one minus the proportion of curves in the sample
+The Epigraph Index of a curve x is one minus the proportion of curves
+in the sample
 that are above x.
 }
 \examples{
