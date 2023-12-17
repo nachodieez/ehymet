@@ -8,16 +8,23 @@ method and distance}
 clustInd_kmeans(
   ind_data,
   vars_list,
+  name_vars = NULL,
   dist_list = c("euclidean", "mahalanobis"),
   n_cluster = 2,
-  true_labels = NULL
+  true_labels = NULL,
+  colapse = FALSE,
+  num_cores = 1
 )
 }
 \arguments{
 \item{ind_data}{Dataframe containing indexes applied to the main data and
 derivatives}
 
-\item{vars_list}{List of characters representing variable sets for clustering}
+\item{vars_list}{List of variable sets for clustering}
+
+\item{name_vars}{A vector with names for \code{vars_list}. NULL by default
+in which case names are set to vars1, ..., varsk, where k is the number of
+elements in \code{vars_list}.}
 
 \item{dist_list}{List of distance metrics}
 
@@ -25,8 +32,18 @@ derivatives}
 
 \item{true_labels}{Vector of true labels for validation
 (if it is not known true_labels is set to NULL)}
+
+\item{colapse}{It is a boolean. If it is true a dataframe with metrics values
+is generated. If \code{true_labels} is True the dataframe contains Purity,
+F-measure, RI and Time, and if it is False, only Time.}
+
+\item{num_cores}{Number of cores to do parallel computation. 1 by default,
+which mean no parallel execution.}
 }
 \value{
+A list containing hierarchical clustering results
+for each configuration
+
 A list containing kmeans clustering results for each configuration
 }
 \description{

@@ -11,6 +11,7 @@ EHyClus(
   curves,
   t,
   vars_list,
+  name_vars = NULL,
   nbasis = 30,
   norder = 4,
   indices = c("EI", "HI", "MEI", "MHI"),
@@ -21,6 +22,8 @@ EHyClus(
   l_method_svc = c("kmeans", "kernkmeans"),
   n_clusters = 2,
   true_labels = NULL,
+  colapse = FALSE,
+  num_cores = 1,
   ...
 )
 }
@@ -32,7 +35,11 @@ represents the number of dimensions in the data}
 
 \item{t}{Grid}
 
-\item{vars_list}{List of characters representing variable sets for clustering}
+\item{vars_list}{List representing variable sets for clustering}
+
+\item{name_vars}{A vector with names for \code{vars_list}. NULL by default
+in which case names are set to vars1, ..., varsk, where k is the number of
+elements in \code{vars_list}.}
 
 \item{nbasis}{Number of basis for the B-splines}
 
@@ -58,6 +65,13 @@ clustering}
 \item{true_labels}{Vector of true labels for validation
 (if it is not known true_labels is set to NULL)}
 
+\item{colapse}{It is a boolean. If it is true a dataframe with metrics values
+is generated. If \code{true_labels} is True the dataframe contains Purity,
+F-measure, RI and Time, and if it is False, only Time.}
+
+\item{num_cores}{Number of cores to do parallel computation. 1 by default,
+which mean no parallel execution.}
+
 \item{...}{Additional arguments (unused)}
 }
 \value{
@@ -70,4 +84,11 @@ EHyClus method for clustering. It creates a multivariate dataset containing
 the epigraph, hypograph and/or modified version on the curves and derivatives
 and perform hierarchical clustering, kmeans, kernel kmeans, support vector
 clustering and spectral clustering
+}
+\examples{
+vars1 <- c("dtaEI", "dtaMEI"); vars2 <- c("dtaHI", "dtaMHI")
+varsl <- list(vars1, vars2)
+data <- ehymet::sim_model_ex1()
+t <- seq(0, 1, length = 30)
+EHyClus(data, t, varsl)
 }

@@ -91,6 +91,18 @@ MHI <- function(curves){
   return(index)
 }
 
+#' Epigraph Index (EI) for a multivariate functional dataset.
+#'
+#' @param curves An array with dimension \eqn{n \times p \times k} with
+#' \eqn{n} curves, \eqn{p} values along the curve, and \eqn{k} dimensions.
+#'
+#' @return A numeric vector containing the EI for each multivariate curve
+#' @export
+#'
+#' @examples
+#' x <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
+#' dim = c(3,4,2))
+#' mulEI(x)
 mulEI <- function(curves) {
   n_curves <- dim(curves)[1]
   l_curves <- dim(curves)[2]
@@ -104,6 +116,18 @@ mulEI <- function(curves) {
   return (1 - index/n_curves)
 }
 
+#' Hypograph Index (HI) for a multivariate functional dataset.
+#'
+#' @param curves An array with dimension \eqn{n \times p \times k} with
+#' \eqn{n} curves, \eqn{p} values along the curve, and \eqn{k} dimensions.
+#'
+#' @return A numeric vector containing the HI for each multivariate curve
+#' @export
+#'
+#' @examples
+#' x <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
+#' dim = c(3,4,2))
+#' mulHI(x)
 mulHI <- function(curves) {
   n_curves <- dim(curves)[1]
   l_curves <- dim(curves)[2]
@@ -117,6 +141,18 @@ mulHI <- function(curves) {
   return (index/n_curves)
 }
 
+#' Modified epigraph Index (MEI) for a multivariate functional dataset.
+#'
+#' @param curves An array with dimension \eqn{n \times p \times k} with
+#' \eqn{n} curves, \eqn{p} values along the curve, and \eqn{k} dimensions.
+#'
+#' @return A numeric vector containing the MEI for each multivariate curve
+#' @export
+#'
+#' @examples
+#' x <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
+#' dim = c(3,4,2))
+#' mulMEI(x)
 mulMEI <- function(curves) {
   n_curves <- dim(curves)[1]
   l_curves <- dim(curves)[2]
@@ -130,6 +166,18 @@ mulMEI <- function(curves) {
   return (1 - index/(n_curves*l_curves))
 }
 
+#' Modified hypograph Index (MHI) for a multivariate functional dataset.
+#'
+#' @param curves An array with dimension \eqn{n \times p \times k} with
+#' \eqn{n} curves, \eqn{p} values along the curve, and \eqn{k} dimensions.
+#'
+#' @return A numeric vector containing the MHI for each multivariate curve
+#' @export
+#'
+#' @examples
+#' x <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
+#' dim = c(3,4,2))
+#' mulMHI(x)
 mulMHI <- function(curves) {
   n_curves <- dim(curves)[1]
   l_curves <- dim(curves)[2]
@@ -143,7 +191,33 @@ mulMHI <- function(curves) {
   return (index/(n_curves*l_curves))
 }
 
-ind <- function(curves, t, rangeval, nbasis, norder,
+#' Create a dataset with indexes from a functional dataset in one or multiple
+#' dimensions
+#'
+#' @param curves A matrix with dimension \eqn{n \times p} in the case of a
+#' one-dimensional functional dataset, or a matrix of dimension
+#' \eqn{n \times p \times k} in the case of a multivariate functional dataset.
+#' \eqn{n} represents the number of curves, \eqn{p} the number ofvalues along
+#' the curve, and in the second case, \eqn{k} is the number of dimensions.
+#' @param t Grid
+#' @param nbasis Number of basis for the B-splines
+#' @param norder Order of the B-splines
+#' @param indices Set of indices to be applied to the dataset. They should be
+#' between EI, HI, MEI and MHI
+#' @param ... Additional arguments (unused)
+#'
+#' @return A dataframe containing the indexes provided in \code{indices} for
+#' original data, first and second derivatives
+#' @export
+#'
+#' @examples
+#' x1 <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
+#' dim = c(3,4,2))
+#' ind(x1, t=seq(0,1,length=4), nbasis=4)
+#'
+#' x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),nrow = 3,ncol  = 4)
+#' ind(x2, t=seq(0,1,length=4), nbasis=4)
+ind <- function(curves, t, nbasis=25, norder=4,
                      indices = c("EI", "HI", "MEI", "MHI"), ...){
 
   # Check the curves dimension
@@ -159,8 +233,8 @@ ind <- function(curves, t, rangeval, nbasis, norder,
   else  stop("Invalid number of dimensions")
 
   # Smoothed data and derivatives
-  fun_data <- funspline(curves = curves, t = t, rangeval = rangeval,
-                        nbasis = nbasis, norder = norder, ...)
+  fun_data <- funspline(curves = curves, t = t, nbasis = nbasis,
+                        norder = norder, ...)
 
   # Initialize an empty data frame to store the results
   ind_data <- as.data.frame(matrix(NA, nrow = nrow(fun_data$smooth), ncol = 0))

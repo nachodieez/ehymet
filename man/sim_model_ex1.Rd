@@ -29,12 +29,12 @@ generated fron the following model
 is the mean function and \eqn{e(t)} is a centered Gaussian process with
 covariance matrix \eqn{Cov(e(t_i),e(t_j))=0.3 \exp(-\frac{\lvert t_i-t_j \rvert}{0.3})}
 The remaining 50 functions are generated from model \code{i_sim} with
-\eqn{\code{i_sim} \in \{1, \ldots, 8\}}
+\code{i_sim} \eqn{\in \{1, \ldots, 8\}.}
 The first three models contain changes in the mean, while the covariance
 matrix does not change. Model 4 and 5 are obtained by multiplying the
 covariance matrix by a constant. Model 6 is obtained from adding to
 \eqn{E_1(t)} a centered Gaussian process \eqn{h(t)} whose covariance matrix
-is given by $\eqn{Cov(e(t_i),e(t_j))=0.5 \exp (-\frac{\lvert t_i-t_j\rvert}{0.2})}.
+is given by \eqn{Cov(e(t_i),e(t_j))=0.5 \exp (-\frac{\lvert t_i-t_j\rvert}{0.2})}.
 Model 7 and 8 are obtained by a different mean function.
 \describe{
 \item{Model 1.}{\eqn{X_1(t)=30t^{\frac{3}{2}}(1-t)+0.5+e(t).}}

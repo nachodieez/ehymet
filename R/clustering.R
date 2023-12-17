@@ -23,14 +23,22 @@ clustInd_hierarch_aux <- function(ind_data, vars, method ="single",
   }
 
   # Check if variables exist in the data frame
-  if (!all(get(vars) %in% names(ind_data))) {
-    stop("Invalid variable names.")
+  if (!all(vars %in% names(ind_data))) {
+    stop("Invalid variable name.")
+  }
+
+  if(!all(method %in% c("single","complete","average", "centroid","ward.D2"))) {
+    stop("Invalid method name.")
+  }
+
+  if(!all(dist %in% c("euclidean", "manhattan"))) {
+    stop("Invalid distance name.")
   }
 
   t0 <- Sys.time()
 
   # Perform hierarchical clustering
-  d <- stats::dist(ind_data[,get(vars)], method = dist)
+  d <- stats::dist(ind_data[,vars], method = dist)
   met <- stats::hclust(d, method = method)
   clus <- stats::cutree(met, k = n_cluster)
 
@@ -54,82 +62,100 @@ clustInd_hierarch_aux <- function(ind_data, vars, method ="single",
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data and
 #' derivatives
-#' @param vars_list List of characters representing variable sets for
+#' @param vars_list List of variable sets for
 #' clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param method_list List of clustering methods
 #' @param dist_list List of distance metrics
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
-#'
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
 #' @return A list containing hierarchical clustering results
 #' for each configuration
 #' @export
-clustInd_hierarch <- function(ind_data, vars_list,
+#' @examples
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' vars2 <- c("dtaHI", "dtaMHI")
+#' data <- ehymet::sim_model_ex1()
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clustInd_hierarch(data_ind, list(vars1, vars2))
+clustInd_hierarch <- function(ind_data, vars_list, name_vars = NULL,
                               method_list = c("single","complete","average",
                                               "centroid","ward.D2"),
                               dist_list = c("euclidean", "manhattan"),
-                              n_cluster=2, true_labels = NULL) {
+                              n_cluster=2, true_labels = NULL, colapse = FALSE,
+                              num_cores=1) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
     stop("Input 'ind_data' must be a data frame.")
   }
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a list.")
+  }
+
+  if(!is.null(name_vars) & !length(vars_list) == length(name_vars)){
+    stop("'name_vars' and 'vars_list' should have the same length.")
   }
 
   # Check if indices, methods and distances lists are provided
-  if (!is.character(vars_list) || !is.character(method_list) ||
+  if ( !is.character(method_list) ||
       !is.character(dist_list) || length(vars_list) == 0 ||
       length(method_list) == 0 || length(dist_list) == 0) {
     stop("Invalid 'method_list' or 'dist_list'. Both must be non-empty
          character vectors.")
   }
 
+  if(is.null(name_vars)) name_vars <- paste0("vars", 1:length(vars_list))
+  names(vars_list) <- name_vars
+
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, method = method_list,
-                                        distance = dist_list)
+  parameter_combinations <- expand.grid(vars = names(vars_list),
+                                        method = method_list, distance = dist_list)
 
-  cl_list <- list()
   tl_null <- is.null(true_labels)
-  nc <- ifelse(tl_null, 1, 4)
-  metrics_df <- data.frame(matrix(ncol = nc, nrow = 0))
 
-  for(comb in 1:nrow(parameter_combinations)){
+  n_comb <- nrow(parameter_combinations)
 
-    # Apply hierarchical clustering to each combination
-    result <- clustInd_hierarch_aux(ind_data,
-                                    as.character(parameter_combinations$vars[comb]),
-                                    parameter_combinations$method[comb],
-                                    parameter_combinations$distance[comb],
-                                    n_cluster, true_labels)
-    result_name <- paste("hierarch", parameter_combinations$method[comb],
-                         parameter_combinations$distance[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])),
-                               collapse = ""),
-                         sep = "_")
-    cl_list[[result_name]] <- result$cluster
+  result <- parallel::mclapply(1:n_comb, function(i) {
+    vars <- vars_list[[parameter_combinations$vars[i]]]
+    met <- parameter_combinations$method[i]
+    dist <- parameter_combinations$distance[i]
 
-    metrics_row <- result$time
-    if (!tl_null) {
-      metrics_row <- c(result$valid, metrics_row)
-    }
-    metrics_df <- rbind(metrics_df, metrics_row)
-    rownames(metrics_df)[nrow(metrics_df)] <- result_name
-  }
+    clustInd_hierarch_aux(ind_data, vars, met, dist, n_cluster, true_labels)
+}, mc.cores = num_cores)
 
-  if(tl_null) colnames(metrics_df) <- "Time"
-  else colnames(metrics_df) <- c("Purity","Fmeasure","RI","Time")
+  result_name <- apply(parameter_combinations, 1, function(row) {
+    paste("hierarch", row["method"], row["distance"],
+          paste(get(as.character(row["vars"])), collapse = ""),
+          sep = "_")
+  })
 
-  result_list <- list("cluster" = cl_list, "metrics" = metrics_df)
+  names(result) <- result_name
 
-  return(result_list)
+  if(colapse) result <- list("list" = result,
+                             "metrics" = result_to_table(result, colapse))
+
+  return(result)
 }
 
 
+#' k-means clustering with Mahalanobis distance
+#'
+#' @param ind_data Dataframe containing indexes applied to the main data
+#' and derivatives
+#' @param n_cluster Number of clusters to create
+#'
+#' @return k-means clustering with Mahalanobis distance output
+#' @noRd
 kmeans_mahal <- function(ind_data, n_cluster){
 
   # Check if input is numeric matrix or array
@@ -176,7 +202,7 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
   }
 
   # Check if variables exist in the data frame
-  if (!all(get(vars) %in% names(ind_data))) {
+  if (!all(vars %in% names(ind_data))) {
     stop("Invalid variable names.")
   }
 
@@ -188,10 +214,10 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
   t0 <- Sys.time()
 
   if(dist=="euclidean"){
-    clus <- stats::kmeans(ind_data[,get(vars)], centers = n_cluster,
+    clus <- stats::kmeans(ind_data[,vars], centers = n_cluster,
                           iter.max = 1000, nstart = 100)$cluster
-  }else{
-    clus <- kmeans_mahal(ind_data[,get(vars)], n_cluster)
+  } else{
+    clus <- kmeans_mahal(ind_data[,vars], n_cluster)
   }
   t1 <- Sys.time()
   t <- data.frame(difftime(t1,t0,'secs'))
@@ -210,70 +236,86 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data and
 #' derivatives
-#' @param vars_list List of characters representing variable sets for clustering
+#' @param vars_list List of variable sets for clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param dist_list List of distance metrics
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
+#' @return A list containing hierarchical clustering results
+#' for each configuration
 #'
 #' @return A list containing kmeans clustering results for each configuration
 #' @export
-clustInd_kmeans <- function(ind_data, vars_list,
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' vars2 <- c("dtaHI", "dtaMHI")
+#' data <- ehymet::sim_model_ex1()
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clustInd_kmeans(data_ind, list(vars1, vars2))
+clustInd_kmeans <- function(ind_data, vars_list, name_vars = NULL,
                             dist_list =  c("euclidean", "mahalanobis"),
-                            n_cluster = 2, true_labels = NULL) {
+                            n_cluster = 2, true_labels = NULL, colapse = FALSE,
+                            num_cores=1) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
     stop("Input 'ind_data' must be a data frame.")
   }
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a list.")
   }
 
-  # Check if indices and distances lists are provided
-  if (!is.character(vars_list) || !is.character(dist_list) ||
-      length(vars_list) == 0 || length(dist_list) == 0) {
-    stop("Invalid 'method_list' or 'dist_list'.
-         Both must be non-empty character vectors.")
+  if(!is.null(name_vars) & !length(vars_list) == length(name_vars)){
+    stop("'name_vars' and 'vars_list' should have the same length.")
   }
+
+  # Check if indices, methods and distances lists are provided
+  if (length(vars_list) == 0 ||  length(dist_list) == 0) {
+    stop("Invalid 'vars_list' or 'dist_list'. Both must be non-empty
+         character vectors.")
+  }
+
+  if(is.null(name_vars)) name_vars <- paste0("vars", 1:length(vars_list))
+
+  names(vars_list) <- name_vars
 
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, distance = dist_list)
+  parameter_combinations <- expand.grid(vars = names(vars_list),
+                                        distance = dist_list)
 
-  cl_list <- list()
   tl_null <- is.null(true_labels)
-  nc <- ifelse(tl_null, 1, 4)
-  metrics_df <- data.frame(matrix(ncol = nc, nrow = 0))
 
-  for(comb in 1:nrow(parameter_combinations)){
+  n_comb <- nrow(parameter_combinations)
 
-    # Apply kmeans to each combination
-    result <- clustInd_kmeans_aux(ind_data,
-                                  as.character(parameter_combinations$vars[comb]),
-                                  parameter_combinations$distance[comb],
-                                  n_cluster, true_labels)
-    result_name <- paste("kmeans", parameter_combinations$distance[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])),
-                               collapse = ""), sep = "_")
-    cl_list[[result_name]] <- result$cluster
+  result <- parallel::mclapply(1:n_comb, function(i) {
+    vars <- vars_list[[parameter_combinations$vars[i]]]
+    dist <- parameter_combinations$distance[i]
 
-    metrics_row <- result$time
-    if (!tl_null) {
-      metrics_row <- c(result$valid, metrics_row)
-    }
-    metrics_df <- rbind(metrics_df, metrics_row)
-    rownames(metrics_df)[nrow(metrics_df)] <- result_name
-  }
+    clustInd_kmeans_aux(ind_data = ind_data, vars =vars, dist = dist,
+                           n_cluster = n_cluster, true_labels = true_labels)
+  }, mc.cores = num_cores)
 
-  if(tl_null) colnames(metrics_df) <- "Time"
-  else colnames(metrics_df) <- c("Purity","Fmeasure","RI","Time")
+  result_name <- apply(parameter_combinations, 1, function(row) {
+    paste("kmeans", row["distance"], paste(get(as.character(row["vars"])),
+                                           collapse = ""), sep = "_")
+  })
 
-  result_list <- list("cluster" = cl_list, "metrics" = metrics_df)
+  names(result) <- result_name
 
-  return(result_list)
+  if(colapse) result <- list("list" = result,
+                             "metrics" = result_to_table(result, colapse))
+
+  return(result)
 }
+
 #' Perform kernel kmeans clustering for a given combination of indexes
 #' and distance
 #'
@@ -296,12 +338,18 @@ clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot",
   }
 
   # Check if variables exist in the data frame
-  if (!all(get(vars) %in% names(ind_data))) {
+  if (!all(vars %in% names(ind_data))) {
     stop("Invalid variable names.")
   }
 
+  # Check if the kernel given can be used
+  if (!kernel %in% c("rbfdot", "polydot")) {
+    stop("Invalid kernel.")
+  }
+
+
   t0 <- Sys.time()
-  kkmeans_out <- kernlab::kkmeans(as.matrix(ind_data[,get(vars)]),
+  kkmeans_out <- kernlab::kkmeans(as.matrix(ind_data[,vars]),
                                   centers= n_cluster, kernel = kernel, ...)
   clus <- kkmeans_out@.Data
   t1 <- Sys.time()
@@ -322,69 +370,83 @@ clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot",
 #' @param ind_data Dataframe containing indexes applied to the main data and
 #'  derivatives
 #' @param vars_list List of characters representing variable sets for clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param kernel_list List of kernels
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_kkmeans <- function(ind_data, vars_list,
+#' @examples
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' vars2 <- c("dtaHI", "dtaMHI")
+#' data <- ehymet::sim_model_ex1()
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clustInd_kkmeans(data_ind, list(vars1, vars2))
+clustInd_kkmeans <- function(ind_data, vars_list, name_vars = NULL,
                              kernel_list = c("rbfdot", "polydot"),
-                             n_cluster=2, true_labels = NULL, ...) {
+                             n_cluster=2, true_labels = NULL, colapse = FALSE,
+                             num_cores=1, ...) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
     stop("Input 'ind_data' must be a data frame.")
   }
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a list.")
   }
 
-  # Check if indices and distances lists are provided
-  if (!is.character(vars_list) || !is.character(kernel_list) ||
-      length(vars_list) == 0 || length(kernel_list) == 0) {
-    stop("Invalid 'method_list' or 'kernel_list'.
-         Both must be non-empty character vectors.")
+  if(!is.null(name_vars) & !length(vars_list) == length(name_vars)){
+    stop("'name_vars' and 'vars_list' should have the same length.")
   }
+
+  # Check if indices, and kernel lists are provided
+  if (!is.character(kernel_list) || length(vars_list) == 0 ||
+       length(kernel_list) == 0) {
+    stop("Invalid 'kernel_list' or 'vars_list'. Both must be non-empty
+         character vectors.")
+  }
+
+  if(is.null(name_vars)) name_vars <- paste0("vars", 1:length(vars_list))
+  names(vars_list) <- name_vars
 
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, kernel = kernel_list)
+  parameter_combinations <- expand.grid(vars = names(vars_list),
+                                        kernel = kernel_list)
 
-  cl_list <- list()
   tl_null <- is.null(true_labels)
-  nc <- ifelse(tl_null, 1, 4)
-  metrics_df <- data.frame(matrix(ncol = nc, nrow = 0))
 
-  for(comb in 1:nrow(parameter_combinations)){
+  n_comb <- nrow(parameter_combinations)
 
-    # Apply kmeans to each combination
-    result <- clustInd_kkmeans_aux(ind_data,
-                                   as.character(parameter_combinations$vars[comb]),
-                                   as.character(parameter_combinations$kernel[comb]),
-                                   n_cluster, true_labels, ...)
-    result_name <- paste("kkmeans", parameter_combinations$kernel[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])),
-                               collapse = ""), sep = "_")
-    cl_list[[result_name]] <- result$cluster
+  result <- parallel::mclapply(1:n_comb, function(i) {
+    vars <- vars_list[[parameter_combinations$vars[i]]]
+    kern <- as.character(parameter_combinations$kernel[i])
 
-    metrics_row <- result$time
-    if (!tl_null) {
-      metrics_row <- c(result$valid, metrics_row)
-    }
-    metrics_df <- rbind(metrics_df, metrics_row)
-    rownames(metrics_df)[nrow(metrics_df)] <- result_name
-  }
+    clustInd_kkmeans_aux(ind_data, vars, kern, n_cluster, true_labels)
+  }, mc.cores = num_cores)
 
-  if(tl_null) colnames(metrics_df) <- "Time"
-  else colnames(metrics_df) <- c("Purity","Fmeasure","RI","Time")
+  result_name <- apply(parameter_combinations, 1, function(row) {
+    paste("kkmeans", row["kernel"],
+          paste(get(as.character(row["vars"])), collapse = ""),
+          sep = "_")
+  })
 
-  result_list <- list("cluster" = cl_list, "metrics" = metrics_df)
+  names(result) <- result_name
 
-  return(result_list)
+  if(colapse) result <- list("list" = result,
+                             "metrics" = result_to_table(result, colapse))
+
+  return(result)
 }
 
 #' Perform support vector clustering for a given combination of indexes
@@ -392,8 +454,9 @@ clustInd_kkmeans <- function(ind_data, vars_list,
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data
 #' and derivatives
-#' @param vars_list List of characters representing variable sets for clustering
-#' @param kernel The kernel method to be used
+#' @param vars Combination of indexes to use for clustering
+#' (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
+#' @param method The initialization method to be used
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
@@ -409,7 +472,7 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
   }
 
   # Check if variables exist in the data frame
-  if (!all(get(vars) %in% names(ind_data))) {
+  if (!all(vars %in% names(ind_data))) {
     stop("Invalid variable names.")
   }
 
@@ -420,7 +483,7 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
   r1 <- round(nrow_ind_data/n_cluster)
   r2 <- nrow_ind_data - (n_cluster-1) * r1
   y <-  c(rep(1:(n_cluster-1), each =r1), rep(n_cluster, r2))
-  clusterSVM_output <- SwarmSVM::clusterSVM(ind_data[,get(vars)], y, n_cluster,
+  clusterSVM_output <- SwarmSVM::clusterSVM(ind_data[,vars], y, n_cluster,
                                             cluster.method=method, ...)
   clus <- clusterSVM_output$label
 
@@ -441,78 +504,91 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data
 #' and derivatives
-#' @param vars_list List of characters representing variable sets for clustering
+#' @param vars_list List representing variable sets for clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param method_list List of methods
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_svc <- function(ind_data, vars_list,
+#' @examples
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' vars2 <- c("dtaHI", "dtaMHI")
+#' data <- ehymet::sim_model_ex1()
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clustInd_svc(data_ind, list(vars1, vars2))
+clustInd_svc <- function(ind_data, vars_list, name_vars = NULL,
                          method_list = c("kmeans", "kernkmeans"),
-                         n_cluster = 2, true_labels = NULL, ...) {
+                         n_cluster = 2, true_labels = NULL, colapse = FALSE,
+                         num_cores=1, ...) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
     stop("Input 'ind_data' must be a data frame.")
   }
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a data frame.")
   }
 
-  # Check if indices and distances lists are provided
-  if (!is.character(vars_list) || !is.character(method_list) ||
-      length(vars_list) == 0 || length(method_list) == 0) {
-    stop("Invalid 'method_list' or 'method_list'.
-         Both must be non-empty character vectors.")
+  if(!is.null(name_vars) & !length(vars_list) == length(name_vars)){
+    stop("'name_vars' and 'vars_list' should have the same length.")
   }
+
+  # Check if indices, methods and distances lists are provided
+  if ( !is.character(method_list) ||  length(vars_list) == 0 ||
+       length(method_list) == 0) {
+    stop("Invalid 'method_list' or 'vars_list'. Both must be non-empty
+         character vectors.")
+  }
+
+  if(is.null(name_vars)) name_vars <- paste0("vars", 1:length(vars_list))
+  names(vars_list) <- name_vars
 
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, method = method_list)
+  parameter_combinations <- expand.grid(vars = names(vars_list),
+                                        method = method_list)
 
-  cl_list <- list()
   tl_null <- is.null(true_labels)
-  nc <- ifelse(tl_null, 1, 4)
-  metrics_df <- data.frame(matrix(ncol = nc, nrow = 0))
 
-  for(comb in 1:nrow(parameter_combinations)){
+  n_comb <- nrow(parameter_combinations)
 
-    # Apply svc to each combination
-    result <- clustInd_svc_aux(ind_data,
-                               as.character(parameter_combinations$vars[comb]),
-                               as.character(parameter_combinations$method[comb]),
-                               n_cluster, true_labels, ...)
-    result_name <- paste("svc", parameter_combinations$method[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])),
-                               collapse = ""),
-                         sep = "_")
-    cl_list[[result_name]] <- result$cluster
+  result <- parallel::mclapply(1:n_comb, function(i) {
+    vars <- vars_list[[parameter_combinations$vars[i]]]
+    met <- as.character(parameter_combinations$method[i])
 
-    metrics_row <- result$time
-    if (!tl_null) {
-      metrics_row <- c(result$valid, metrics_row)
-    }
-    metrics_df <- rbind(metrics_df, metrics_row)
-    rownames(metrics_df)[nrow(metrics_df)] <- result_name
-  }
+    clustInd_svc_aux(ind_data, vars, met, n_cluster, true_labels)
+  }, mc.cores = num_cores)
 
-  if(tl_null) colnames(metrics_df) <- "Time"
-  else colnames(metrics_df) <- c("Purity","Fmeasure","RI","Time")
+  result_name <- apply(parameter_combinations, 1, function(row) {
+    paste("svc", row["method"],
+          paste(get(as.character(row["vars"])), collapse = ""),
+          sep = "_")
+  })
 
-  result_list <- list("cluster" = cl_list, "metrics" = metrics_df)
+  names(result) <- result_name
 
-  return(result_list)
+  if(colapse) result <- list("list" = result,
+                             "metrics" = result_to_table(result, colapse))
+
+  return(result)
 }
 
 #' Perform spectral clustering for a given combination of indexes and kernel
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data
 #' and derivatives
-#' @param vars Character vector of indexes names for clustering
+#' @param vars Combination of indexes to use for clustering
 #' (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
@@ -530,7 +606,7 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
   }
 
   # Check if variables exist in the data frame
-  if (!all(get(vars) %in% names(ind_data))) {
+  if (!all(vars %in% names(ind_data))) {
     stop("Invalid variable names.")
   }
 
@@ -538,7 +614,7 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
 
   # create target variable
   nrow_ind_data <- nrow(ind_data)
-  specc_output <- kernlab::specc(as.matrix(ind_data[,get(vars)]),
+  specc_output <- kernlab::specc(as.matrix(ind_data[,vars]),
                                  centers = n_cluster,  kernel = kernel, ...)
   clus <- specc_output@.Data
 
@@ -559,69 +635,84 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
 #'
 #' @param ind_data Dataframe containing indexes applied to the main data
 #' and derivatives
-#' @param vars_list List of characters representing variable sets for clustering
+#' @param vars_list List representing variable sets for clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param kernel_list List of kernels
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing kkmeans clustering results for each configuration
 #' @export
-clustInd_spc <- function(ind_data, vars_list,
+#' @examples
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' vars2 <- c("dtaHI", "dtaMHI")
+#' data <- ehymet::sim_model_ex1()
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clustInd_spc(data_ind, list(vars1, vars2))
+clustInd_spc <- function(ind_data, vars_list, name_vars = NULL,
                          kernel_list = c("rbfdot", "polydot"),
-                         n_cluster = 2, true_labels = NULL, ...) {
+                         n_cluster = 2, true_labels = NULL, colapse = FALSE,
+                         num_cores=1, ...) {
 
   # Check if input is a data frame
   if (!is.data.frame(ind_data)) {
     stop("Input 'ind_data' must be a data frame.")
   }
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a data frame.")
   }
 
-  # Check if indices and distances lists are provided
-  if (!is.character(vars_list) || !is.character(kernel_list) ||
-      length(vars_list) == 0 || length(kernel_list) == 0) {
-    stop("Invalid 'method_list' or 'method_list'.
-         Both must be non-empty character vectors.")
+  if(!is.null(name_vars) & !length(vars_list) == length(name_vars)){
+    stop("'name_vars' and 'vars_list' should have the same length.")
   }
+
+  # Check if indices, methods and distances lists are provided
+  if (!is.character(kernel_list) || length(vars_list) == 0 ||
+      length(kernel_list) == 0) {
+    stop("Invalid 'kernel_list' or 'vars_list'. Both must be non-empty
+         character vectors.")
+  }
+
+  if(is.null(name_vars)) name_vars <- paste0("vars", 1:length(vars_list))
+  names(vars_list) <- name_vars
 
   # Generate all the possible combinations of indices, methods and distances
-  parameter_combinations <- expand.grid(vars = vars_list, kernel = kernel_list)
+  parameter_combinations <- expand.grid(vars = names(vars_list),
+                                        kernel = kernel_list)
 
-  cl_list <- list()
   tl_null <- is.null(true_labels)
-  nc <- ifelse(tl_null, 1, 4)
-  metrics_df <- data.frame(matrix(ncol = nc, nrow = 0))
 
-  for(comb in 1:nrow(parameter_combinations)){
+  n_comb <- nrow(parameter_combinations)
 
-    # Apply spc to each combination
-    result <- clustInd_spc_aux(ind_data,
-                               as.character(parameter_combinations$vars[comb]),
-                               as.character(parameter_combinations$kernel[comb]),
-                               n_cluster, true_labels, ...)
-    result_name <- paste("spc", parameter_combinations$kernel[comb],
-                         paste(get(as.character(parameter_combinations$vars[comb])),
-                               collapse = ""), sep = "_")
-    cl_list[[result_name]] <- result$cluster
+  result <- parallel::mclapply(1:n_comb, function(i) {
+    vars <- vars_list[[parameter_combinations$vars[i]]]
+    kern <- as.character(parameter_combinations$kernel[i])
 
-    metrics_row <- result$time
-    if (!tl_null) {
-      metrics_row <- c(result$valid, metrics_row)
-    }
-    metrics_df <- rbind(metrics_df, metrics_row)
-    rownames(metrics_df)[nrow(metrics_df)] <- result_name
-  }
+    clustInd_spc_aux(ind_data, vars, kern, n_cluster, true_labels)
+  }, mc.cores = num_cores)
 
-  if(tl_null) colnames(metrics_df) <- "Time"
-  else colnames(metrics_df) <- c("Purity","Fmeasure","RI","Time")
+  result_name <- apply(parameter_combinations, 1, function(row) {
+    paste("spc", row["kernel"],
+          paste(get(as.character(row["vars"])), collapse = ""),
+          sep = "_")
+  })
 
-  result_list <- list("cluster" = cl_list, "metrics" = metrics_df)
-  return(result_list)
+  names(result) <- result_name
+
+  if(colapse) result <- list("list" = result,
+                             "metrics" = result_to_table(result, colapse))
+
+  return(result)
 }
 
 
@@ -636,12 +727,15 @@ clustInd_spc <- function(ind_data, vars_list,
 #' curves and p the number of time points, or multidimensional (nxpxk) where k
 #' represents the number of dimensions in the data
 #' @param t Grid
+#' @param vars_list List representing variable sets for clustering
+#' @param name_vars A vector with names for \code{vars_list}. NULL by default
+#' in which case names are set to vars1, ..., varsk, where k is the number of
+#' elements in \code{vars_list}.
 #' @param nbasis Number of basis for the B-splines
 #' @param norder Order of the B-splines
 #' @param indices Names ofthe indices that need to be generated. They should be
 #' one or more between EI, HI, MEI, MHI. Depending on the dimension on the data
 #' they are calculated for one or multiple dimension
-#' @param vars_list List of characters representing variable sets for clustering
 #' @param l_method_hierarch List of clustering methods for hierarchical
 #' clustering
 #' @param l_dist_hierarch List of distances for hierarchical clustering
@@ -651,26 +745,36 @@ clustInd_spc <- function(ind_data, vars_list,
 #' @param n_clusters Number of clusters to create
 #' @param true_labels Vector of true labels for validation
 #' (if it is not known true_labels is set to NULL)
+#' @param colapse It is a boolean. If it is true a dataframe with metrics values
+#' is generated. If \code{true_labels} is True the dataframe contains Purity,
+#' F-measure, RI and Time, and if it is False, only Time.
+#' @param num_cores Number of cores to do parallel computation. 1 by default,
+#' which mean no parallel execution.
 #' @param ... Additional arguments (unused)
 #'
 #' @return A list containing the clustering partition for each method and indexes
 #' combination and a data frame containing the time elapsed for obtaining a
 #' clustering partition of the indexes dataset for each methodology
 #' @export
-#'
-EHyClus <- function(curves, t, vars_list, nbasis = 30, norder = 4,
-                    indices = c("EI", "HI", "MEI", "MHI"),
+#' @examples
+#' vars1 <- c("dtaEI", "dtaMEI"); vars2 <- c("dtaHI", "dtaMHI")
+#' varsl <- list(vars1, vars2)
+#' data <- ehymet::sim_model_ex1()
+#' t <- seq(0, 1, length = 30)
+#' EHyClus(data, t, varsl)
+EHyClus <- function(curves, t, vars_list, name_vars = NULL, nbasis = 30,
+                    norder = 4, indices = c("EI", "HI", "MEI", "MHI"),
                     l_method_hierarch = c("single","complete","average",
                                           "centroid","ward.D2"),
                     l_dist_hierarch = c("euclidean", "manhattan"),
                     l_dist_kmeans =  c("euclidean", "mahalanobis"),
                     l_kernel = c("rbfdot", "polydot"),
                     l_method_svc = c("kmeans", "kernkmeans"),
-                    n_clusters = 2, true_labels = NULL, ...){
+                    n_clusters = 2, true_labels = NULL, colapse = FALSE,
+                    num_cores=1, ...){
 
-  # Check all elements in vars_list are characters
-  if(!all(is.character(vars_list))){
-    stop("Elemens in vars_list should be characters")
+  if(!is.list(vars_list)) {
+    stop("Input 'vars_list' must be a data frame.")
   }
 
   # Check indices names
@@ -678,41 +782,54 @@ EHyClus <- function(curves, t, vars_list, nbasis = 30, norder = 4,
     stop("Indices should be one or more of the following: EI, HI, MEI, MHI")
   }
 
+  # vars_list TIENE QUE SER LIST !!!!!
+
   # Generate the dataset with the indexes
-  ind_curves <- ind(curves, t, c(min(t), max(t)), nbasis, norder, indices)
+  ind_curves <- ind(curves, t, nbasis, norder, indices)
 
     # Hierarchical clustering
   cl_hierarch <- clustInd_hierarch(ind_data = ind_curves, vars_list = vars_list,
+                                   name_vars = name_vars,
                                    method_list = l_method_hierarch,
                                    dist_list = l_dist_hierarch,
-                                   n_cluster = n_clusters,
-                                   true_labels = true_labels)
+                                   n_cluster = n_clusters, true_labels = true_labels,
+                                   colapse = colapse, num_cores = num_cores)
 
   # kmeans
   cl_kmeans <- clustInd_kmeans(ind_data = ind_curves, vars_list = vars_list,
                                dist_list = l_dist_kmeans, n_cluster = n_clusters,
-                               true_labels = true_labels)
+                               true_labels = true_labels, colapse = colapse,
+                               num_cores = num_cores)
 
   # kernel kmeans
   cl_kkmeans <- clustInd_kkmeans(ind_data = ind_curves, vars_list = vars_list,
                                  kernel_list = l_kernel, n_cluster = n_clusters,
-                                 true_labels = true_labels)
+                                 true_labels = true_labels, colapse = colapse,
+                                 num_cores = num_cores)
 
   # support vector clustering
   cl_svc <- clustInd_svc(ind_data = ind_curves, vars_list = vars_list,
                          method_list = l_method_svc, n_cluster = n_clusters,
-                         true_labels = true_labels)
+                         true_labels = true_labels, colapse = colapse,
+                         num_cores = num_cores)
 
   # spectral clustering
   cl_spc <- clustInd_spc(ind_data = ind_curves, vars_list = vars_list,
                          kernel_list = l_kernel, n_cluster = n_clusters,
-                         true_labels = true_labels)
+                         true_labels = true_labels, colapse = colapse,
+                         num_cores = num_cores)
 
-  cluster <- c(cl_hierarch$cluster, cl_kmeans$cluster, cl_kkmeans$cluster,
-               cl_svc$cluster, cl_spc$cluster)
+  cluster <- c(cl_hierarch, cl_kmeans, cl_kkmeans, cl_svc, cl_spc)
 
-  metrics <- rbind(cl_hierarch$metrics, cl_kmeans$metrics, cl_kkmeans$metrics,
-                   cl_svc$metrics, cl_spc$metrics)
+  if(colapse){
+    metrics <- rbind(cl_hierarch$metrics, cl_kmeans$metrics, cl_kkmeans$metrics,
+                     cl_svc$metrics, cl_spc$metrics)
+    result <- list("cluster" = cluster, "metrics" = metrics)
 
-  return(list("cluster" = cluster, "metrics" = metrics))
+  } else{
+    result <- list("cluster" = cluster)
+  }
+
+
+  return(result)
 }
