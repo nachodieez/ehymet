@@ -1,8 +1,7 @@
 #' Epigraph Index (EI) for a univariate functional dataset.
 #'
 #' The Epigraph Index of a curve x is one minus the proportion of curves
-#' in the sample
-#' that are above x.
+#' in the sample that are above x.
 #'
 #' @param curves A matrix where each row represents a curve, and each column
 #' represents values along the curve.
@@ -11,7 +10,7 @@
 #' @export
 #'
 #' @examples
-#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),ncol = 3, nrow = 4)
+#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), ncol = 3, nrow = 4)
 #' EI(x)
 EI <- function(curves){
   n_curves <- dim(curves)[1]
@@ -34,7 +33,7 @@ EI <- function(curves){
 #' @export
 #'
 #' @examples
-#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),ncol = 3, nrow = 4)
+#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), ncol = 3, nrow = 4)
 #' HI(x)
 HI <- function(curves){
   n_curves <- dim(curves)[1]
@@ -48,8 +47,7 @@ HI <- function(curves){
 #' Modified Epigraph Index (MEI) for a univariate functional dataset.
 #'
 #' The Modified Epigraph Index of a curve x is one minus the proportion of
-#' "time"
-#' the curves in the sample are above x
+#' "time" the curves in the sample are above x
 #'
 #' @param curves A matrix where each row represents a curve, and each column
 #' represents values along the curve.
@@ -72,7 +70,7 @@ MEI <- function(curves){
 #' Modified Hypograph Index (MHI) for a univariate functional dataset.
 #'
 #' The Modified Hypograph Index of a curve x is the proportion of "time"
-#' the curves in the sample are below x
+#' the curves in the sample are below x.
 #'
 #' @param curves A matrix where each row represents a curve, and each column
 #' represents values along the curve.
@@ -81,7 +79,7 @@ MEI <- function(curves){
 #' @export
 #'
 #' @examples
-#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),ncol = 3, nrow = 4)
+#' x <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), ncol = 3, nrow = 4)
 #' MHI(x)
 MHI <- function(curves){
   n_curves <- dim(curves)[1]
@@ -197,13 +195,13 @@ mulMHI <- function(curves) {
 #' @param curves A matrix with dimension \eqn{n \times p} in the case of a
 #' one-dimensional functional dataset, or a matrix of dimension
 #' \eqn{n \times p \times k} in the case of a multivariate functional dataset.
-#' \eqn{n} represents the number of curves, \eqn{p} the number ofvalues along
+#' \eqn{n} represents the number of curves, \eqn{p} the number of values along
 #' the curve, and in the second case, \eqn{k} is the number of dimensions.
 #' @param t Grid
 #' @param nbasis Number of basis for the B-splines
 #' @param norder Order of the B-splines
 #' @param indices Set of indices to be applied to the dataset. They should be
-#' between EI, HI, MEI and MHI
+#' any between EI, HI, MEI and MHI
 #' @param ... Additional arguments (unused)
 #'
 #' @return A dataframe containing the indexes provided in \code{indices} for
@@ -213,10 +211,10 @@ mulMHI <- function(curves) {
 #' @examples
 #' x1 <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
 #' dim = c(3,4,2))
-#' ind(x1, t=seq(0,1,length=4), nbasis=4)
+#' ind(x1, t = seq(0,1,length=4), nbasis = 4)
 #'
-#' x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),nrow = 3,ncol  = 4)
-#' ind(x2, t=seq(0,1,length=4), nbasis=4)
+#' x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), nrow = 3, ncol  = 4)
+#' ind(x2, t = seq(0,1,length=4), nbasis = 4)
 ind <- function(curves, t, nbasis=25, norder=4,
                      indices = c("EI", "HI", "MEI", "MHI"), ...){
 
@@ -239,7 +237,8 @@ ind <- function(curves, t, nbasis=25, norder=4,
   # Initialize an empty data frame to store the results
   ind_data <- as.data.frame(matrix(NA, nrow = nrow(fun_data$smooth), ncol = 0))
 
-  # Loop through the list of functions and apply them to the smoothed and derived data
+  # Loop through the list of functions and apply them to the smoothed and
+  # its first and second derivatives
   for (i in 1:length(indices)) {
     smooth_col <- paste0("dta", indices[i])
     deriv_col <- paste0("ddta", indices[i])

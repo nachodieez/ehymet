@@ -1,9 +1,9 @@
 #' Perform hierarchical clustering for a given combination of indexes,
 #' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars character vector of indexes names for clustering (e. g. vars1)
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars vector with a combinations of indexes in \code{ind_data}
 #' @param method The agglomerative method to be used in hierarchical clustering
 #' @param dist The distance method to be used
 #' @param n_cluster Number of clusters to create
@@ -60,10 +60,10 @@ clustInd_hierarch_aux <- function(ind_data, vars, method ="single",
 #' Perform hierarchical clustering for a different combinations of indexes,
 #' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and
-#' derivatives
-#' @param vars_list List of variable sets for
-#' clustering
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.
@@ -150,8 +150,8 @@ clustInd_hierarch <- function(ind_data, vars_list, name_vars = NULL,
 
 #' k-means clustering with Mahalanobis distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
 #' @param n_cluster Number of clusters to create
 #'
 #' @return k-means clustering with Mahalanobis distance output
@@ -183,9 +183,9 @@ kmeans_mahal <- function(ind_data, n_cluster){
 
 #' Perform kmeans clustering for a given combination of indexes and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and
-#' derivatives
-#' @param vars character vector of indexes names for clustering (e. g. vars1)
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars vector with a combinations of indexes in \code{ind_data}
 #' @param dist The distance method to be used
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
@@ -234,9 +234,10 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
 #' Perform hierarchical clustering for a different combinations of indexes,
 #' method and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and
-#' derivatives
-#' @param vars_list List of variable sets for clustering
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.
@@ -254,6 +255,7 @@ clustInd_kmeans_aux <- function(ind_data, vars, dist = "euclidean",
 #'
 #' @return A list containing kmeans clustering results for each configuration
 #' @export
+#' @examples
 #' vars1 <- c("dtaEI", "dtaMEI")
 #' vars2 <- c("dtaHI", "dtaMHI")
 #' data <- ehymet::sim_model_ex1()
@@ -319,9 +321,9 @@ clustInd_kmeans <- function(ind_data, vars_list, name_vars = NULL,
 #' Perform kernel kmeans clustering for a given combination of indexes
 #' and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars character vector of indexes names for clustering (e. g. vars1)
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars vector with a combinations of indexes in \code{ind_data}
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
@@ -367,9 +369,10 @@ clustInd_kkmeans_aux <- function(ind_data, vars, kernel = "rbfdot",
 #' Perform kernel kmeans clustering for a different combinations of indexes
 #' and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data and
-#'  derivatives
-#' @param vars_list List of characters representing variable sets for clustering
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.
@@ -452,10 +455,9 @@ clustInd_kkmeans <- function(ind_data, vars_list, name_vars = NULL,
 #' Perform support vector clustering for a given combination of indexes
 #' and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars Combination of indexes to use for clustering
-#' (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars vector with a combinations of indexes in \code{ind_data}
 #' @param method The initialization method to be used
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
@@ -502,9 +504,10 @@ clustInd_svc_aux <- function(ind_data, vars, method = "kmeans", n_cluster = 2,
 #' Perform support vector clustering for a different combinations of indexes
 #' and distance
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars_list List representing variable sets for clustering
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.
@@ -586,10 +589,9 @@ clustInd_svc <- function(ind_data, vars_list, name_vars = NULL,
 
 #' Perform spectral clustering for a given combination of indexes and kernel
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars Combination of indexes to use for clustering
-#' (e. g. vars1 <- c("dtaMEI", "dtaMHI"))
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars vector with a combinations of indexes in \code{ind_data}
 #' @param kernel The kernel method to be used
 #' @param n_cluster Number of clusters to create
 #' @param true_labels Vector of true labels for validation
@@ -633,9 +635,10 @@ clustInd_spc_aux <- function(ind_data, vars, kernel = "rbfdot", n_cluster = 2,
 #' Perform spectral clustering for a different combinations of indexes
 #' and kernels
 #'
-#' @param ind_data Dataframe containing indexes applied to the main data
-#' and derivatives
-#' @param vars_list List representing variable sets for clustering
+#' @param ind_data Dataframe containing indexes applied to the original data and
+#' its first and second derivatives
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.
@@ -727,7 +730,8 @@ clustInd_spc <- function(ind_data, vars_list, name_vars = NULL,
 #' curves and p the number of time points, or multidimensional (nxpxk) where k
 #' represents the number of dimensions in the data
 #' @param t Grid
-#' @param vars_list List representing variable sets for clustering
+#' @param vars_list List containing one or more combinations of indexes in
+#' \code{ind_data}
 #' @param name_vars A vector with names for \code{vars_list}. NULL by default
 #' in which case names are set to vars1, ..., varsk, where k is the number of
 #' elements in \code{vars_list}.

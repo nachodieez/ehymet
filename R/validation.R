@@ -1,3 +1,21 @@
+#' Create a table containing three validation metrics: Purity, F-measure
+#' and Rand Index (RI)
+#'
+#' @param true_labels Vector of true labels for validation
+#' @param clusters Number of clusters to create
+#'
+#' @return A table containing values for Purity, F-measure and RI
+#' @export
+#'
+#' @examples
+#' set.seed(1221)
+#' vars1 <- c("dtaEI", "dtaMEI")
+#' data <- ehymet::sim_model_ex1()
+#' true_labels <- c(rep(1, 50), rep(2, 50))
+#' data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+#' clus_kmeans <- ehymet::clustInd_kmeans(data_ind, list(vars1))
+#' cluskmeans_mahalanobis_dtaEIdtaMEI <- clus_kmeans$kmeans_mahalanobis_dtaEIdtaMEI$cluster
+#' valid(true_labels, cluskmeans_mahalanobis_dtaEIdtaMEI)
 valid <- function(true_labels, clusters){
 
   if (is.integer(true_labels))

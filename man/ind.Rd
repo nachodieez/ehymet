@@ -18,7 +18,7 @@ ind(
 \item{curves}{A matrix with dimension \eqn{n \times p} in the case of a
 one-dimensional functional dataset, or a matrix of dimension
 \eqn{n \times p \times k} in the case of a multivariate functional dataset.
-\eqn{n} represents the number of curves, \eqn{p} the number ofvalues along
+\eqn{n} represents the number of curves, \eqn{p} the number of values along
 the curve, and in the second case, \eqn{k} is the number of dimensions.}
 
 \item{t}{Grid}
@@ -28,7 +28,7 @@ the curve, and in the second case, \eqn{k} is the number of dimensions.}
 \item{norder}{Order of the B-splines}
 
 \item{indices}{Set of indices to be applied to the dataset. They should be
-between EI, HI, MEI and MHI}
+any between EI, HI, MEI and MHI}
 
 \item{...}{Additional arguments (unused)}
 }
@@ -43,8 +43,8 @@ dimensions
 \examples{
 x1 <- array(c(1,2,3, 3,2,1, 5,2,3, 9,8,7, -1,-5,-6, 2,3,0, -1,0,2, -1,-2,0),
 dim = c(3,4,2))
-ind(x1, t=seq(0,1,length=4), nbasis=4)
+ind(x1, t = seq(0,1,length=4), nbasis = 4)
 
-x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7),nrow = 3,ncol  = 4)
-ind(x2, t=seq(0,1,length=4), nbasis=4)
+x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), nrow = 3, ncol  = 4)
+ind(x2, t = seq(0,1,length=4), nbasis = 4)
 }

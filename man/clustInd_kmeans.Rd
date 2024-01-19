@@ -17,10 +17,11 @@ clustInd_kmeans(
 )
 }
 \arguments{
-\item{ind_data}{Dataframe containing indexes applied to the main data and
-derivatives}
+\item{ind_data}{Dataframe containing indexes applied to the original data and
+its first and second derivatives}
 
-\item{vars_list}{List of variable sets for clustering}
+\item{vars_list}{List containing one or more combinations of indexes in
+\code{ind_data}}
 
 \item{name_vars}{A vector with names for \code{vars_list}. NULL by default
 in which case names are set to vars1, ..., varsk, where k is the number of
@@ -49,4 +50,11 @@ A list containing kmeans clustering results for each configuration
 \description{
 Perform hierarchical clustering for a different combinations of indexes,
 method and distance
+}
+\examples{
+vars1 <- c("dtaEI", "dtaMEI")
+vars2 <- c("dtaHI", "dtaMHI")
+data <- ehymet::sim_model_ex1()
+data_ind <- ehymet::ind(data, t=seq(0, 1, length = 30))
+clustInd_kmeans(data_ind, list(vars1, vars2))
 }

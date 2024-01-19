@@ -18,10 +18,11 @@ clustInd_spc(
 )
 }
 \arguments{
-\item{ind_data}{Dataframe containing indexes applied to the main data
-and derivatives}
+\item{ind_data}{Dataframe containing indexes applied to the original data and
+its first and second derivatives}
 
-\item{vars_list}{List representing variable sets for clustering}
+\item{vars_list}{List containing one or more combinations of indexes in
+\code{ind_data}}
 
 \item{name_vars}{A vector with names for \code{vars_list}. NULL by default
 in which case names are set to vars1, ..., varsk, where k is the number of
