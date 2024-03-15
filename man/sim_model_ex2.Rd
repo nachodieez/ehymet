@@ -14,7 +14,7 @@ Set to 50 by default}
 Curves are generated over the interval \eqn{[0, 1]}.
 Set to 150 grid point by default}
 
-\item{i_sim}{Integer set to 1 or 2}
+\item{i_sim}{Integer set to \eqn{1, \ldots, 4}}
 
 \item{seed}{A seed to set for reproducibility.
 NULL by default in which case a seed is not set.}

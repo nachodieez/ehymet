@@ -28,4 +28,6 @@ Imports:
     kernlab,
     SwarmSVM,
     dplyr,
-    MASS
+    MASS,
+    ggplot2,
+    tidyr

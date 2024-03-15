@@ -85,6 +85,7 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1, seed = NULL){
   }
 
   dat <- rbind(dat1, dat2)
+
   return(dat)
 }
 
@@ -96,7 +97,7 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1, seed = NULL){
 #' @param p Number of grid points of the curves.
 #' Curves are generated over the interval \eqn{[0, 1]}.
 #' Set to 150 grid point by default
-#' @param i_sim Integer set to 1 or 2
+#' @param i_sim Integer set to \eqn{1, \ldots, 4}
 #' @param seed A seed to set for reproducibility.
 #' NULL by default in which case a seed is not set.
 #'
@@ -175,4 +176,42 @@ sim_model_ex2 <- function(n = 50, p = 150, i_sim = 1, seed = NULL){
   return(X)
 }
 
+
+#' Function for generating plots of one dimensional functional datasets
+#'
+#' @param data data matrix of size \eqn{n \times p}
+#' @param true_labels array containing the true groups in which the data should
+#' be classified
+#'
+#' @return A plot
+#' @export
+#'
+#' @examples
+#' dat1 <- sim_model_ex1()
+#' true_labels <- c(rep(1,50), rep(2,50))
+#' plt_fun(dat1, true_labels)
+plt_fun <- function(data, true_labels){
+
+  if (!(length(dim(data)) == 2))
+    stop("This function can be only used with 2-dimensional datasets.")
+
+  df <-  dplyr::as_tibble(data)
+  t_interval <- seq(0, 1, length = ncol(data))
+  names(df) <- as.character(t_interval)
+  df$id <- 1:nrow(data)
+  df$Order <- true_labels
+  df_long<- df %>% tidyr::pivot_longer(-c(id, Order), names_to="variable", values_to="values") %>%
+    dplyr::mutate(variable=as.numeric(variable))
+  pa <- df_long %>% ggplot2::ggplot(ggplot2::aes(x=variable, y=values,group=id, color=factor(Order)))
+
+  plt<- pa +
+    ggplot2::geom_line(linewidth=0.1)+
+    ggplot2::scale_color_brewer(palette = "Set1")+
+    # scale_color_manual(values=c("#CC6600","#3399FF")) +
+    # ggtitle("MEI. First dimension")+
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))+
+    ggplot2::ylab("") + ggplot2::xlab("") +
+    ggplot2::theme(legend.position = "none")
+  return(plt)
+}
 
