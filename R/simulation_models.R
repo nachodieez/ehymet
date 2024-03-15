@@ -59,12 +59,12 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1, seed = NULL){
   # centered Gaussian process
   hgauss <- MASS::mvrnorm(n ,rep(0, p), sigma2)
 
-  matr <- (30 * t_interval^(3/2) * (1 - t_interval)) |>
-    matrix(nrow = n, ncol = p)
+  f1 <- (30 * t_interval^(3/2) * (1 - t_interval))
+  matr <- matrix(rep(f1, each = n), nrow = n)
   dat1 <- matr + egauss
 
-  matr2 <- (30 * t_interval * (1 - t_interval)) |>
-    matrix(nrow = n, ncol = p)
+  f2 <- (30 * t_interval * (1 - t_interval))
+  matr2 <- matrix(rep(f2, each = n), nrow = n)
 
   if(i_sim == 1){
     dat2 <- dat1 + 0.5
