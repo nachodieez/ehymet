@@ -50,7 +50,6 @@ funspline <- function(curves, t, nbasis, norder, ...){
     stop("Invalid number of dimensions")
   }
 
-
   # Return a list containing the data and derivatives
   res <- list(
     "smooth" = smooth,
@@ -61,16 +60,15 @@ funspline <- function(curves, t, nbasis, norder, ...){
   return(res)
 }
 
-#' Transforn metrics results from clustering functions in cluster.R to a dataframe
+#' Transform metrics results from clustering functions in cluster.R to a dataframe
 #'
 #' @param res list containing clustering partition and metric for different
 #' combinations
 #' @param tl_null a bool to indicate weather metrics other than time ane or not
 #' available
 #'
-#' @returnDataframe
+#' @return Dataframe
 #' @noRd
-#'
 result_to_table <- function(res, tl_null){
   name_res <- names(res)
   len_res <- length(name_res)
@@ -85,4 +83,41 @@ result_to_table <- function(res, tl_null){
     row.names(metrics_df) <- name_res
     }
   return(metrics_df)
+}
+
+#' Checks for list function arguments
+#'
+#' Checks that a list given as argument to a function is not empty,
+#' has no repeated values and all its elements are within a bounded set.
+#'
+#' @param argument Input argument of the function.
+#' @param parameter_values Possible values that may appear in the list.
+#' @param parameter_name Name of the parameter.
+#'
+#' @noRd
+check_list_parameter <- function(argument, parameter_values, parameter_name) {
+  if (length(argument) == 0) {
+    stop("parameter '", parameter_name, "' should have at least one element.", call. = FALSE)
+  }
+
+  if (any(duplicated(argument))) {
+    stop("duplicated argument in '", parameter_name,"'.", call. = FALSE)
+  }
+
+  indices <- pmatch(argument, parameter_values)
+  if (any(is.na(indices))) {
+    stop("invalid argument in '", parameter_name, "': ", paste(argument[is.na(indices)], collapse = ", "), ".",
+         call. = FALSE)
+  }
+}
+
+#' Generate the name for the results of the clustering methods
+#' @noRd
+get_result_names <- function(method_name, parameter_combinations, vars_list) {
+  paste(method_name, parameter_combinations[[2]],
+        rep(sapply(vars_list, function(x) paste0(x, collapse = "")),
+            times = nrow(parameter_combinations) / length(vars_list)
+            ),
+        sep = "_"
+  )
 }
