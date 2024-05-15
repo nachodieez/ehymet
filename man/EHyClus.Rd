@@ -22,7 +22,6 @@ EHyClus(
   grid_ll = 0,
   grid_ul = 1,
   true_labels = NULL,
-  colapse = FALSE,
   verbose = FALSE,
   num_cores = 1,
   ...
@@ -34,8 +33,10 @@ The functional dataset can be one dimensional (\eqn{n \times p}) where n is the 
 curves and p the number of time points, or multidimensional (\eqn{n \times p \times k}) where k
 represents the number of dimensions in the data}
 
-\item{vars_combinations}{\code{list} containing one or more combinations of indexes in
-\code{ind_data}. If it is non-named, the names of the variables are set to
+\item{vars_combinations}{\code{list} containing one or more combinations of variables.
+Each element of the list should be an atomic \code{vector} of strings with the
+names of the variables. Combinations with non-valid variable names will be discarded.
+If it is non-named, the names of the variables are set to
 vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.}
 
 \item{nbasis}{Number of basis for the B-splines.}
@@ -66,10 +67,6 @@ clustering}
 
 \item{true_labels}{Vector of true labels for validation
 (if it is not known true_labels is set to NULL)}
-
-\item{colapse}{It is a boolean. If it is true a dataframe with metrics values
-is generated. If \code{true_labels} is True the dataframe contains Purity,
-F-measure, RI and Time, and if it is False, only Time.}
 
 \item{verbose}{If \code{TRUE}, the function will print logs for about the execution of
 some clustering methods. Defaults to \code{FALSE}.}
