@@ -266,6 +266,8 @@ MHI.default <- function(curves, ...) {
 #'
 #' x2 <- matrix(c(1,2,3,3,2,1,5,2,3,9,8,7), nrow = 3, ncol  = 4)
 #' ind(x2, nbasis = 4)
+#'
+#' @export
 ind <- function(curves, grid_ll = 0, grid_ul = 1, nbasis=25, norder=4,
                      indices = c("EI", "HI", "MEI", "MHI"), ...){
 
