@@ -159,23 +159,23 @@ check_vars_combinations <- function(vars_combinations, ind_curves) {
   }
 
   if (length(vars_empty)) {
-    warning(paste0("Index/indices '", paste0(vars_empty, collapse = ", "), "' of 'vars_combinations' is/are empty.",
+    warning(paste("Index/indices ", paste0(vars_empty, collapse = ", "), "of 'vars_combinations' is/are empty.",
                    "Removing them..."))
   }
 
   if (length(vars_invalid_name)) {
-    warning(paste0("Invalid variable name in 'vars_combinations' for index/indices ",
+    warning(paste("Invalid variable name in 'vars_combinations' for index/indices ",
                    paste0(vars_invalid_name, collapse = ", "),
                    ". Removing them..."))
   }
 
   if (length(vars_almost_singular)) {
-    warning(paste0("Combination/s of variables with index/indices", paste0(vars_almost_singular, collapse = ", "),
+    warning(paste("Combination/s of variables with index/indices", paste0(vars_almost_singular, collapse = ", "),
                    "is/are singular or almost singular. Removing them..."))
   }
 
   if (length(vars_combinations_to_remove)) {
-    warning(paste0("Combination/s of variable/s with index", paste0(vars_combinations_to_remove, collapse = ", "),
+    warning(paste("Combination/s of variable/s with index", paste0(vars_combinations_to_remove, collapse = ", "),
                    "are not valid. Excluding them from any computation..."))
   }
 
