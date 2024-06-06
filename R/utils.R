@@ -1,66 +1,82 @@
-#' Smooth data and calculate first and second derivatives
+#' Smooth the data and computes the first and second derivatives
 #'
-#' @param curves \code{matrix} where each row represents a curve, and each column
-#' represents values along the curve or \code{array} with dimension
-#' \eqn{n \times p \times k} with \eqn{n} curves, \eqn{p} values along the curve, and
-#' \eqn{k} dimensions.
-#' @param nbasis Number of basis for the B-splines
-#' @param norder Order of the B-splines
-#' @param grid_ll lower limit of the grid.
-#' @param grid_ul upper limit of the grid.
-#' @param ... Ignored.
+#' @param curves \code{matrix} with dimension \eqn{n \times p} in the case of a
+#' one-dimensional functional dataset, or \code{array} of dimension
+#' \eqn{n \times p \times q} in the case of a multivariate functional dataset.
+#' \eqn{n} represents the number of curves, \eqn{p} the number of values along
+#' the curve, and in the second case, \eqn{q} is the number of dimensions.
+#' @param k Number of basis functions for the B-splines. If equals to 0, the number
+#' of basis functions will be automatically selected.
+#' @param bs A two letter character string indicating the (penalized) smoothing
+#' basis to use. See \code{\link{smooth.terms}}.
+#' @param grid Atomic vector of type numeric with two elements: the lower limit and the upper
+#' limit of the evaluation grid. If not provided, it will be selected automatically.
 #'
 #' @return A list containing smoothed data, first and second derivatives
+#'
 #' @noRd
-funspline <- function(curves, nbasis, norder, grid_ll = 0, grid_ul = 1, ...) {
-  #Create B-spline basis
-  basisobj <- fda::create.bspline.basis(rangeval = c(grid_ll, grid_ul),
-                                        nbasis = nbasis, norder = norder, ...)
-
+funspline <- function(curves, k, bs = "cr", grid) {
   curves_dim <- length(dim(curves))
-  grid <- seq(from = grid_ll, to = grid_ul, length.out = dim(curves)[2])
 
-  if(curves_dim == 2){
+  tfb_params <- list(bs = bs)
 
-    # Smooth data using B-spline basis
-    ys <-  fda::smooth.basis(argvals = grid, y = t(curves), fdParobj = basisobj)
+  if (!missing(k)) {
+    tfb_params[["k"]] <- k
+  }
+
+  if (!missing(grid)) {
+    grid <- seq(grid[1], grid[2], length.out = dim(curves)[2])
+    tfb_params[["arg"]] <- grid
+  }
+
+  if (curves_dim == 2) {
+    tfb_params[["data"]] <- curves
+
+    ys <- suppressMessages(do.call(tf::tfb, tfb_params))
 
     # Evaluate smoothed data and derivatives
-    smooth <- t(fda::eval.fd(grid ,ys$fd,0)) # smoothed data
-    deriv <- t(fda::eval.fd(grid ,ys$fd,1)) # first derivatives
-    deriv2 <- t(fda::eval.fd(grid ,ys$fd,2)) # second derivatives
-  } else if(curves_dim == 3){
+    smooth <- as.matrix(ys) # smoothed data
+
+    if (!missing(grid)) {
+      deriv <- as.matrix(tf::tf_derive(ys, arg = grid, order = 1))
+      deriv2 <- as.matrix(tf::tf_derive(ys, arg = grid, order = 2))
+    } else {
+      deriv <- as.matrix(tf::tf_derive(ys, order = 1))
+      deriv2 <- as.matrix(tf::tf_derive(ys, order = 2))
+    }
+  } else {
     n_curves <- dim(curves)[1]
     l_curves <- dim(curves)[2]
     d_curves <- dim(curves)[3]
 
     # Initialize empty dataframes to store the results
-    smooth <- array(rep(NaN,n_curves*l_curves),dim=c(n_curves,l_curves,d_curves))
-    deriv <- array(rep(NaN,n_curves*l_curves),dim=c(n_curves,l_curves,d_curves))
-    deriv2 <- array(rep(NaN,n_curves*l_curves),dim=c(n_curves,l_curves,d_curves))
+    smooth <- array(rep(NaN, n_curves * l_curves), dim = c(n_curves, l_curves, d_curves))
+    deriv <- array(rep(NaN, n_curves * (l_curves)), dim = c(n_curves, l_curves, d_curves))
+    deriv2 <- array(rep(NaN, n_curves * (l_curves)), dim = c(n_curves, l_curves, d_curves))
 
-    for(d in 1:dim(curves)[3]){
+    for (d in seq_len(dim(curves)[3])) {
+      tfb_params[["data"]] <- curves[, , d]
+
       # Smooth data using B-spline basis
-      ys <-  fda::smooth.basis(argvals = grid, y = t(curves[,,d]),
-                               fdParobj = basisobj)
+      ys <- suppressMessages(do.call(tf::tfb, tfb_params))
 
       # Evaluate smoothed data and derivatives
-      smooth[,,d] <- t(fda::eval.fd(grid ,ys$fd,0)) # smoothed data
-      deriv[,,d] <- t(fda::eval.fd(grid ,ys$fd,1)) # first derivatives
-      deriv2[,,d] <- t(fda::eval.fd(grid ,ys$fd,2)) # second derivatives
+      smooth[, , d] <- as.matrix(ys) # smoothed data
+      if (!missing(grid)) {
+        deriv[, , d] <- as.matrix(tf::tf_derive(ys, arg = grid, order = 1))
+        deriv2[, , d] <- as.matrix(tf::tf_derive(ys, arg = grid, order = 2))
+      } else {
+        deriv[, , d] <- as.matrix(tf::tf_derive(ys, order = 1))
+        deriv2[, , d] <- as.matrix(tf::tf_derive(ys, order = 2))
+      }
     }
-  } else {
-    stop("Invalid number of dimensions")
   }
 
-  # Return a list containing the data and derivatives
-  res <- list(
+  list(
     "smooth" = smooth,
-    "deriv" = deriv,
+    "deriv"  = deriv,
     "deriv2" = deriv2
-    )
-
-  return(res)
+  )
 }
 
 #' Checks for list function arguments
@@ -79,13 +95,14 @@ check_list_parameter <- function(argument, parameter_values, parameter_name) {
   }
 
   if (any(duplicated(argument))) {
-    stop("duplicated argument in '", parameter_name,"'.", call. = FALSE)
+    stop("duplicated argument in '", parameter_name, "'.", call. = FALSE)
   }
 
   indices <- pmatch(argument, parameter_values)
   if (any(is.na(indices))) {
     stop("invalid argument in '", parameter_name, "': ", paste(argument[is.na(indices)], collapse = ", "), ".",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
 }
 
@@ -98,8 +115,8 @@ get_result_names <- function(method_name, parameter_combinations, vars_combinati
   }
 
   args <- append(args, list(rep(sapply(vars_combinations, function(x) paste0(x, collapse = "")),
-                                times = nrow(parameter_combinations) / length(vars_combinations))
-  ))
+    times = nrow(parameter_combinations) / length(vars_combinations)
+  )))
   args[["sep"]] <- "_"
   do.call(paste, args)
 }
@@ -112,76 +129,34 @@ quiet <- function(x) {
   invisible(force(x))
 }
 
-
-#' Check all combinations of variables and found the non-valid ones
+#' Maps the index name to its corresponding function
 #'
-#' @param vars_combinations \code{list} containing one or more combination of variables.
-#' @param ind_curves dataset with indices from a functional dataset in one or multiple
-#' dimensions.
-#'
-#' @return Atomic vector with the index of the non-valid combinations of variables.
+#' Used to ensure that we call our index functions inside \code{generate_indices}
 #'
 #' @noRd
-check_vars_combinations <- function(vars_combinations, ind_curves) {
-  vars_combinations_to_remove <- c()
+map_index_name_to_function <- function(index) {
+  switch(index,
+    "EI"  = EI,
+    "HI"  = HI,
+    "MEI" = MEI,
+    "MHI" = MHI
+  )
+}
 
-  vars_empty           <- c()
-  vars_invalid_name    <- c()
-  vars_almost_singular <- c()
-
-
-  for (i in seq_along(vars_combinations)) {
-    if (length(vars_combinations[[i]]) == 0) {
-      vars_combinations_to_remove <- c(vars_combinations_to_remove, i)
-      vars_empty <- c(vars_empty, i)
-
-      next
-    }
-
-    if (length(vars_combinations[[i]]) == 1) {
-      warning(paste0("Combination of varaibles '", vars_combinations[[i]],
-                     "' with index ", i, " is only one variable, which ",
-                     "does not have much sense in this context...")
-      )
-    }
-
-    if (!all(vars_combinations[[i]] %in% names(ind_curves))) {
-      vars_combinations_to_remove <- c(vars_combinations_to_remove, i)
-      vars_invalid_name <- c(vars_invalid_name, i)
-
-      next
-    }
-
-    if (det(stats::var(ind_curves[,vars_combinations[[i]]])) == 0) {
-      vars_combinations_to_remove <- c(vars_combinations_to_remove, i)
-      vars_almost_singular <- c(vars_almost_singular, i)
-    }
+#' Disable multicore on windows without killing the execution
+#' @noRd
+check_n_cores <- function(n_cores) {
+  if (n_cores < 1 || n_cores %% 1 != 0) {
+    stop("'n_cores' must be an integer number greater than '1'", call. = FALSE)
   }
 
-  if (length(vars_empty)) {
-    warning(paste("Index/indices ", paste0(vars_empty, collapse = ", "), "of 'vars_combinations' is/are empty.",
-                   "Removing them..."))
+  if (.Platform$OS.type != "unix" && n_cores > 1) {
+    warning(
+      "Running this function using multiples cores is only supported on unix systems.",
+      "Setting 'n_cores' parameter to '1'"
+    )
+    return(1)
   }
 
-  if (length(vars_invalid_name)) {
-    warning(paste("Invalid variable name in 'vars_combinations' for index/indices ",
-                   paste0(vars_invalid_name, collapse = ", "),
-                   ". Removing them..."))
-  }
-
-  if (length(vars_almost_singular)) {
-    warning(paste("Combination/s of variables with index/indices", paste0(vars_almost_singular, collapse = ", "),
-                   "is/are singular or almost singular. Removing them..."))
-  }
-
-  if (length(vars_combinations_to_remove)) {
-    warning(paste("Combination/s of variable/s with index", paste0(vars_combinations_to_remove, collapse = ", "),
-                   "are not valid. Excluding them from any computation..."))
-  }
-
-  if (length(vars_combinations_to_remove) == length(vars_combinations)) {
-    stop("none of the combinations provided in 'vars_combinations' is valid.", call. = FALSE)
-  }
-
-  vars_combinations_to_remove
+  return(n_cores)
 }

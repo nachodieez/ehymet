@@ -2,95 +2,91 @@
 % Please edit documentation in R/EHyClus.R
 \name{EHyClus}
 \alias{EHyClus}
-\title{EHyClus method for clustering. It creates a multivariate dataset containing
-the epigraph, hypograph and/or modified version on the curves and derivatives
-and perform hierarchical clustering, kmeans, kernel kmeans, support vector
-clustering and spectral clustering}
+\title{Clustering using Epigraph and Hypograph indices}
 \usage{
 EHyClus(
   curves,
-  vars_combinations,
-  nbasis = 30,
+  vars_combinations = 1,
+  k = 30,
   n_clusters = 2,
-  norder = 4,
+  bs = "cr",
   clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
   indices = c("EI", "HI", "MEI", "MHI"),
   l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
   l_dist_hierarch = c("euclidean", "manhattan"),
   l_dist_kmeans = c("euclidean", "mahalanobis"),
   l_kernel = c("rbfdot", "polydot"),
-  grid_ll = 0,
-  grid_ul = 1,
+  grid,
   true_labels = NULL,
   verbose = FALSE,
-  num_cores = 1,
-  ...
+  n_cores = 1
 )
 }
 \arguments{
 \item{curves}{Dataset containing the curves to apply a clustering algorithm.
-The functional dataset can be one dimensional (\eqn{n \times p}) where n is the number of
-curves and p the number of time points, or multidimensional (\eqn{n \times p \times k}) where k
+The functional dataset can be one dimensional (\eqn{n \times p}) where \eqn{n} is the number of
+curves and \code{p} the number of time points, or multidimensional (\eqn{n \times p \times q}) where \eqn{q}
 represents the number of dimensions in the data}
 
-\item{vars_combinations}{\code{list} containing one or more combinations of variables.
-Each element of the list should be an atomic \code{vector} of strings with the
+\item{vars_combinations}{\code{integer} or \code{list}.
+If \code{integer}, the method will automatically determine the best combinations
+of variables. As many combinations will be selected as the value of the variable.
+If \code{list},  each element of the list should be an atomic \code{vector} of strings with the
 names of the variables. Combinations with non-valid variable names will be discarded.
-If it is non-named, the names of the variables are set to
-vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.}
+If the list is non-named, the names of the variables are set to
+vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.
+Default to an \code{integer} with value \code{1}, i.e. it only uses the theoretically
+best combination.}
 
-\item{nbasis}{Number of basis for the B-splines.}
+\item{k}{Number of basis functions for the B-splines. If equals to \code{0}, the number
+of basis functions will be automatically selected.}
 
-\item{n_clusters}{Number of clusters to create}
+\item{n_clusters}{Number of clusters to generate.}
 
-\item{norder}{Order of the B-splines.}
+\item{bs}{A two letter character string indicating the (penalized) smoothing
+basis to use. See \code{\link{smooth.terms}}.}
 
 \item{clustering_methods}{character vector specifying at least one of the following
-clustering methods to be computed: "hierarch", "kmeans", "kkmeans", "spc".}
+clustering methods to be computed: "hierarch", "kmeans", "kkmeans" or "spc".}
 
 \item{indices}{Names of the indices that need to be generated. They should be
-one or more between 'EI', 'HI', 'MEI' and 'MHI'. Depending on the dimension on the data
-they are calculated for one or multiple dimension}
+one or more between "EI", "HI", "MEI" and "MHI". Depending on the dimension on the data,
+its one-dimensional version or multi-dimensional version is computed.}
 
 \item{l_method_hierarch}{\code{list} of clustering methods for hierarchical
-clustering}
+clustering.}
 
-\item{l_dist_hierarch}{\code{list} of distances for hierarchical clustering}
+\item{l_dist_hierarch}{\code{list} of distances for hierarchical clustering.}
 
-\item{l_dist_kmeans}{\code{list} of distances for kmeans clustering}
+\item{l_dist_kmeans}{\code{list} of distances for kmeans clustering.}
 
-\item{l_kernel}{\code{list} of kernels}
+\item{l_kernel}{\code{list} of kernels for kkmeans or spc.}
 
-\item{grid_ll}{lower limit of the grid.}
+\item{grid}{Atomic vector of type numeric with two elements: the lower limit and the upper
+limit of the evaluation grid. If not provided, it will be selected automatically.}
 
-\item{grid_ul}{upper limit of the grid.}
-
-\item{true_labels}{Vector of true labels for validation
-(if it is not known true_labels is set to NULL)}
+\item{true_labels}{Numeric vector of true labels for validation. If provided,
+more metrics are computed in the final result.}
 
 \item{verbose}{If \code{TRUE}, the function will print logs for about the execution of
 some clustering methods. Defaults to \code{FALSE}.}
 
-\item{num_cores}{Number of cores to do parallel computation. 1 by default,
-which mean no parallel execution.}
-
-\item{...}{Ignored.}
+\item{n_cores}{Number of cores to do parallel computation. 1 by default,
+which mean no parallel execution. Must be an integer number greater than 1.}
 }
 \value{
-A list containing the clustering partition for each method and indexes
-combination and a data frame containing the time elapsed for obtaining a
-clustering partition of the indexes dataset for each methodology
+A \code{list} containing the clustering partition for each method and indexes
+combination and, if \code{true_labels} is provided a data frame containing the time elapsed for obtaining a
+clustering partition of the indexes dataset for each methodology.
 }
 \description{
-EHyClus method for clustering. It creates a multivariate dataset containing
-the epigraph, hypograph and/or modified version on the curves and derivatives
-and perform hierarchical clustering, kmeans, kernel kmeans, support vector
-clustering and spectral clustering
+It creates a multivariate dataset containing
+the epigraph, hypograph and/or its modified versions on the curves and derivatives
+and then perform hierarchical clustering, kmeans, kernel kmeans, and spectral clustering
 }
 \examples{
-vars1 <- c("dtaEI", "dtaMEI"); vars2 <- c("dtaHI", "dtaMHI")
-varsl <- list(vars1, vars2)
-data <- sim_model_ex1()
-EHyClus(data, varsl, grid_ll = 0, grid_ul = 1)
+vars_combinations <- list(c("dtaEI", "dtaMEI"), c("dtaHI", "dtaMHI"))
+curves <- sim_model_ex1(n = 10)
+EHyClus(curves, vars_combinations = vars_combinations)
 
 }
