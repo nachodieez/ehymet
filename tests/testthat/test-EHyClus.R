@@ -5,11 +5,6 @@ test_that("the parameter checking is working as expected", {
   curves <- data$curves
   vars_combinations <- data$vars_combinations
 
-  # Repeated element in 'indices'
-  expect_error(
-    EHyClus(curves, vars_combinations, indices = c("EI", "EI", "HI", "MEI", "MHI"))
-  )
-
   # Empty list in 'l_method_hierarch'
   expect_error(
     EHyClus(curves, vars_combinations, l_method_hierarch = c())
@@ -20,7 +15,7 @@ test_that("the parameter checking is working as expected", {
     EHyClus(curves, vars_combinations, l_dist_hierarch = c("euclidean", "i_do_not_exist"))
   )
 
-  # 'vars_combinations' not being a list (TIENE QUE SER LIST !!!!!)
+  # 'vars_combinations' not being a list
   expect_error(
     EHyClus(curves, unlist(vars_combinations))
   )
@@ -100,55 +95,42 @@ test_that("metrics are correctly created when 'true_labels' is given to 'EHyClus
   expect_equal(dim(res$metrics), c(32, 4))
 })
 
+test_that("the 'generic_vars_combinations' is returning an object of the expected lenght", {
+  curves_unidimensional <- sim_model_ex2(i_sim = 1)
+  vars_combinations_unidimensional <-
+    generic_vars_combinations(length(dim(curves_unidimensional)) == 3)
+  expect_length(vars_combinations_unidimensional, 18)
 
-test_that("the 'get_best_vars_combinations' is giving the expected results", {
-  set.seed(42)
-
-  curves <- sim_model_ex1()
-  grid <- c(1, 2)
-  k <- 30
-  indices <- c("EI", "HI", "MEI", "MHI")
-
-  expected_best_combinations <- list(
-    c("dtaHI", "dtaMEI"),
-    c("dtaHI", "dtaMHI")
-  )
-
-  ind_curves <- generate_indices(curves, grid = grid, k = k, indices = indices)
-
-  expect_error(get_best_vars_combinations(ind_curves = ind_curves, top_n = -2))
-  expect_error(get_best_vars_combinations(ind_curves = ind_curves, top_n = 1.432534534))
-
-  top_n <- 2
-  best_combinatons <- get_best_vars_combinations(ind_curves = ind_curves, top_n = top_n)
-
-  expect_length(best_combinatons, top_n)
-
-  expect_equal(best_combinatons, expected_best_combinations)
+  curves_multidimensional <- sim_model_ex2(i_sim = 3)
+  vars_combinations_multidimensional <-
+    generic_vars_combinations(length(dim(curves_multidimensional)) == 3)
+  expect_length(vars_combinations_multidimensional, 15)
 })
 
-test_that("giving an integer number to 'vars_combinations' works", {
-  set.seed(33)
+test_that("the 'EHyClus' function works without providing 'vars_combinations'", {
+  curves <- sim_model_ex2(n = 5, i_sim = 3)
+  res <- EHyClus(curves)
 
-  curves <- sim_model_ex1()
+  vars_combinations <- attr(res, "vars_combinations")
 
-  # By default, only one combination should be used
-  res <- EHyClus(curves, k = 30)
-  expect_length(attr(res, "vars_combinations"), 1)
+  expect_length(vars_combinations, 15)
+})
 
-  # Changing the 'vars_combinations' parameter should increase the number of combinations
-  res <- EHyClus(curves, vars_combinations = 2, k = 30)
-  expect_length(attr(res, "vars_combinations"), 2)
+test_that("the 'only_best' parameter works", {
+  set.seed(32)
 
-  indices <- c("EI", "MHI")
-  humongous_vars_combinations_number <- 9999999999
-  max_vars_combinations_number <- 2^6 - 6 - 1
-  res <- suppressWarnings(
-    EHyClus(curves,
-      vars_combinations = humongous_vars_combinations_number,
-      indices = indices
-    )
+  n <- 5
+  labels <- rep(c(1, 2), each = n)
+
+  vars1 <- c("dtaMEI", "ddtaMEI")
+  vars2 <- c("dtaMEI", "d2dtaMEI")
+
+  curves <- sim_model_ex2(n = n)
+  res <- EHyClus(curves,
+    vars_combinations = list(vars1, vars2), true_labels = labels,
+    only_best = TRUE
   )
 
-  expect_true(length(attr(res, "vars_combinations")) <= max_vars_combinations_number)
+  expect_equal(dim(res$metrics), c(1, 4))
+  expect_equal(length(res$cluster), 1)
 })

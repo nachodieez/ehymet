@@ -48,7 +48,7 @@ following papers:
     [10.1007/s11222-023-10213-7](https://doi.org/10.1007/s11222-023-10213-7)
 
 -   Belén Pulido, Alba M. Franco-Pereira, Rosa E. Lillo (2023). “The epigraph
-    and the hypograph indexes as useful tools for clustering multivariate
+    and the hypograph indices as useful tools for clustering multivariate
     functional data.” doi:
     [10.48550/arXiv.2307.16720](https://doi.org/10.48550/arXiv.2307.16720)
 
@@ -320,14 +320,14 @@ deriv2 <- funspline_result$deriv2
 The plot for first dimension of the derivative is the following one:
 
 ```{r plot-sim-2-3-1dimension-deriv, echo=FALSE}
-plot_curves(deriv[, , 1], title = "Type 2 DGPs", subtitle = "i_sim = 4; 
+plot_curves(deriv[, , 1], title = "Type 2 DGPs", subtitle = "i_sim = 4;
             first dimension (first derivative)")
 ```
 
 And for the second dimensions:
 
 ```{r plot-sim-2-3-2dimension-deriv, echo=FALSE}
-plot_curves(deriv[, , 2], title = "Type 2 DGPs", subtitle = "i_sim = 4; 
+plot_curves(deriv[, , 2], title = "Type 2 DGPs", subtitle = "i_sim = 4;
             second dimension (first derivative)")
 ```
 

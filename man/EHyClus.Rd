@@ -6,18 +6,18 @@
 \usage{
 EHyClus(
   curves,
-  vars_combinations = 1,
+  vars_combinations,
   k = 30,
   n_clusters = 2,
   bs = "cr",
   clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
-  indices = c("EI", "HI", "MEI", "MHI"),
   l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
   l_dist_hierarch = c("euclidean", "manhattan"),
   l_dist_kmeans = c("euclidean", "mahalanobis"),
   l_kernel = c("rbfdot", "polydot"),
   grid,
   true_labels = NULL,
+  only_best = FALSE,
   verbose = FALSE,
   n_cores = 1
 )
@@ -28,15 +28,13 @@ The functional dataset can be one dimensional (\eqn{n \times p}) where \eqn{n} i
 curves and \code{p} the number of time points, or multidimensional (\eqn{n \times p \times q}) where \eqn{q}
 represents the number of dimensions in the data}
 
-\item{vars_combinations}{\code{integer} or \code{list}.
-If \code{integer}, the method will automatically determine the best combinations
-of variables. As many combinations will be selected as the value of the variable.
-If \code{list},  each element of the list should be an atomic \code{vector} of strings with the
+\item{vars_combinations}{If \code{list},  each element of the list should be an
+atomic \code{vector} of strings with the
 names of the variables. Combinations with non-valid variable names will be discarded.
 If the list is non-named, the names of the variables are set to
 vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.
-Default to an \code{integer} with value \code{1}, i.e. it only uses the theoretically
-best combination.}
+If not provided, generic combinations of variables will be used. They will not be
+the same for uni-dimensional and multi-dimensional problems.}
 
 \item{k}{Number of basis functions for the B-splines. If equals to \code{0}, the number
 of basis functions will be automatically selected.}
@@ -48,10 +46,6 @@ basis to use. See \code{\link{smooth.terms}}.}
 
 \item{clustering_methods}{character vector specifying at least one of the following
 clustering methods to be computed: "hierarch", "kmeans", "kkmeans" or "spc".}
-
-\item{indices}{Names of the indices that need to be generated. They should be
-one or more between "EI", "HI", "MEI" and "MHI". Depending on the dimension on the data,
-its one-dimensional version or multi-dimensional version is computed.}
 
 \item{l_method_hierarch}{\code{list} of clustering methods for hierarchical
 clustering.}
@@ -66,7 +60,11 @@ clustering.}
 limit of the evaluation grid. If not provided, it will be selected automatically.}
 
 \item{true_labels}{Numeric vector of true labels for validation. If provided,
-more metrics are computed in the final result.}
+evaluation metrics are computed in the final result.}
+
+\item{only_best}{\code{logical} value. If \code{TRUE} and \code{true_labels}
+is provided, the function will return only the result for the best clustering
+method based on the Rand Index. Defaults to \code{FALSE}.}
 
 \item{verbose}{If \code{TRUE}, the function will print logs for about the execution of
 some clustering methods. Defaults to \code{FALSE}.}
@@ -75,9 +73,11 @@ some clustering methods. Defaults to \code{FALSE}.}
 which mean no parallel execution. Must be an integer number greater than 1.}
 }
 \value{
-A \code{list} containing the clustering partition for each method and indexes
+A \code{list} containing the clustering partition for each method and indices
 combination and, if \code{true_labels} is provided a data frame containing the time elapsed for obtaining a
-clustering partition of the indexes dataset for each methodology.
+clustering partition of the indices dataset for each methodology. Also, the number of
+generated clusters and the combinations of variables used can be seen as attributes
+of this object.
 }
 \description{
 It creates a multivariate dataset containing
@@ -85,8 +85,20 @@ the epigraph, hypograph and/or its modified versions on the curves and derivativ
 and then perform hierarchical clustering, kmeans, kernel kmeans, and spectral clustering
 }
 \examples{
-vars_combinations <- list(c("dtaEI", "dtaMEI"), c("dtaHI", "dtaMHI"))
+# univarariate data without labels
 curves <- sim_model_ex1(n = 10)
+vars_combinations <- list(c("dtaEI", "dtaMEI"), c("dtaHI", "dtaMHI"))
 EHyClus(curves, vars_combinations = vars_combinations)
+
+# multivariate data with labels
+curves <- sim_model_ex2(n = 5)
+true_labels <- c(rep(1, 5), rep(2, 5))
+vars_combinations <- list(c("dtaMEI", "ddtaMEI"), c("dtaMEI", "d2dtaMEI"))
+res <- EHyClus(curves, vars_combinations = vars_combinations, true_labels = true_labels)
+res$cluster # clustering results
+
+# multivariate data and generic (default) vars_combinations
+curves <- sim_model_ex2(n = 5)
+EHyClus(curves)
 
 }
