@@ -32,7 +32,7 @@ library(ehymet)
 
 One of the main utilities of the epigraph and the hypograph index is to be
 able to measure \`\`extremality'' of a curve with respect to a bunch of curves
-and to provide and ordination of the curves from top to bottom or viceversa.
+and to provide and ordination of the curves from top to bottom or vice-versa.
 
 EHyClus is a methodology for clustering functional data which is based in four
 steps:

@@ -33,7 +33,7 @@ library(ehymet)
 
 The **ehymet** package (**E**pigraph-**Hy**pograph based **met**hodologies for
 functional data) is an `R` package designed to extend popular multivariate
-data analysisi methodologies to functional data using various indices. The
+data analysis methodologies to functional data using various indices. The
 package introduces the **epigraph** and **hypograph** indices, along with
 their modified versions for functional datasets in one or multiple dimensions.
 These indices transform a functional dataset into a multivariate one, enabling
@@ -64,7 +64,7 @@ produces DGPs in both one and two dimensions first introduced by
 These functions are useful for simulating functional data to test statistical
 methods or to understand the behavior of different models under controlled
 conditions. Each of the two functions display different DGPs depending on the
-given parameters, each of them with diferent characteristics.
+given parameters, each of them with different characteristics.
 
 ## Type 1 DGPs
 
