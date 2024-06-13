@@ -18,7 +18,7 @@ NULL by default in which case a seed is not set.}
 \value{
 data matrix of size \eqn{2n \times p} if \eqn{i\_sim \in {1,2}}
 or an array of dimensions
-\eqn{2n \times p \times 2} if \eqn{i\_sim} \in {3, 4}}
+\eqn{2n \times p \times 2} if \eqn{i\_sim \in {3, 4}}
 }
 \description{
 The function can generate one-dimensional or multi-dimensional curves.
