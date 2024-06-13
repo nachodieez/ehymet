@@ -29,9 +29,9 @@
 #' Set to 50 by default.
 #' @param p Number of grid points of the curves.
 #' Curves are generated over the interval \eqn{[0, 1]}.
-#' Set to 30 grid point by default
-#' @param i_sim Integer set to \eqn{1, \ldots, 8}
-#' @return data matrix of size \eqn{2n \times p}
+#' Set to 30 grid point by default.
+#' @param i_sim Integer set to \eqn{1, \ldots, 8}.
+#' @return data matrix of size \eqn{2n \times p}.
 #'
 #' @examples
 #' sm1 <- sim_model_ex1()
@@ -96,7 +96,7 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1) {
 #'
 #' @return data matrix of size \eqn{2n \times p} if \eqn{i\_sim \in {1,2}}
 #' or an array of dimensions
-#' \eqn{2n \times p \times 2} if \eqn{i\_sim \in {3, 4}}
+#' \eqn{2n \times p \times 2} if \eqn{i\_sim \in {3, 4}}.
 #'
 #' @examples
 #' sm1 <- sim_model_ex2()

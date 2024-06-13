@@ -12,12 +12,12 @@ Set to 50 by default.}
 
 \item{p}{Number of grid points of the curves.
 Curves are generated over the interval \eqn{[0, 1]}.
-Set to 30 grid point by default}
+Set to 30 grid point by default.}
 
-\item{i_sim}{Integer set to \eqn{1, \ldots, 8}}
+\item{i_sim}{Integer set to \eqn{1, \ldots, 8}.}
 }
 \value{
-data matrix of size \eqn{2n \times p}
+data matrix of size \eqn{2n \times p}.
 }
 \description{
 Each dataset has 2 groups with \code{n} curves each, defined in the interval
