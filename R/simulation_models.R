@@ -94,7 +94,7 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1) {
 #' @param i_sim Integer set to \eqn{1, \ldots, 4}
 #' NULL by default in which case a seed is not set.
 #'
-#' @return data matrix of size \eqn{2n \times p} if \eqn{\code{i_sim} \in {1,2}}
+#' @return data matrix of size \eqn{2n \times p} if \eqn{i\_sim \in {1,2}}
 #' or an array of dimensions
 #' \eqn{2n \times p \times 2} if \eqn{i\_sim} \in {3, 4}}
 #'
