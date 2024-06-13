@@ -6,8 +6,8 @@
 #' \eqn{X_1(t)=E_1(t)+e(t)} where \eqn{E_1(t)=E_1(X(t))=30t^{ \frac{3}{2}}(1-t)}
 #' is the mean function and \eqn{e(t)} is a centered Gaussian process with
 #' covariance matrix \eqn{Cov(e(t_i),e(t_j))=0.3 \exp(-\frac{\lvert t_i-t_j \rvert}{0.3})}
-#' The remaining 50 functions are generated from model i\_sim with
-#' i\_sim \eqn{\in \{1, \ldots, 8\}.}
+#' The remaining 50 functions are generated from model \code{i_sim} with
+#' \code{i_sim} \eqn{\in \{1, \ldots, 8\}.}
 #' The first three models contain changes in the mean, while the covariance
 #' matrix does not change. Model 4 and 5 are obtained by multiplying the
 #' covariance matrix by a constant. Model 6 is obtained from adding to
@@ -84,8 +84,8 @@ sim_model_ex1 <- function(n = 50, p = 30, i_sim = 1) {
 #' Function for generating functional data in one or multiple dimension
 #'
 #' The function can generate one-dimensional or multi-dimensional curves.
-#' For i\_sim 1 or 2, one-dimensional curves are generated.
-#' For i\_sim 3 or 4, multi-dimensional curves are generated.
+#' For \code{i_sim} 1 or 2, one-dimensional curves are generated.
+#' For \code{i_sim} 3 or 4, multi-dimensional curves are generated.
 #' ADD REFERENCES
 #'
 #' @param n Number of curves to generate for each of the two groups. Set to 50 by default.
