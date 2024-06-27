@@ -33,15 +33,15 @@ for (combination in generic_vars_combinations(multidimensional = TRUE)) {
 }
 
 all_metrics |>
-  arrange(desc(ARI)) |>
+  arrange(desc(RI)) |>
   View()
 
-data.frame(ARI = cor(all_metrics)["ARI", ])
+data.frame(RI = cor(all_metrics)["RI", ])
 
 # In clustering analysis, the trace_WIB can be used to compare different clustering solutions.
 # A clustering solution with a lower trace_WIB is generally preferred as it indicates more compact clusters.
 
-## univariate ##
+## univRIate ##
 
 n <- 50
 curves <- sim_model_ex1(n = n)
@@ -141,15 +141,15 @@ for (combination in generic_vars_combinations(multidimensional = FALSE)) {
 }
 
 all_metrics2 |>
-  arrange(desc(ARI)) |>
+  arrange(desc(RI)) |>
   View()
 
-data.frame(ARI = cor(all_metrics)["ARI", ])  # mult
-data.frame(ARI = cor(all_metrics2)["ARI", ]) # uni
+data.frame(RI = cor(all_metrics)["RI", ])  # mult
+data.frame(RI = cor(all_metrics2)["RI", ]) # uni
 
-data.frame(ARI = cor(rbind(all_metrics, all_metrics2))["ARI", ])
+data.frame(RI = cor(rbind(all_metrics, all_metrics2))["RI", ])
 
 rbind(all_metrics, all_metrics2) |>
-  select(ARI, trace_wib) |>
-  arrange(desc(ARI)) |>
+  select(RI, trace_wib) |>
+  arrange(desc(RI)) |>
   View()
