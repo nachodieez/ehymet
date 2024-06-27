@@ -232,6 +232,7 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
 
   attr(result, "n_clusters") <- n_clusters
   attr(result, "vars_combinations") <- vars_combinations
+  attr(result, "ind_curves") <- ind_curves
 
   result
 }
