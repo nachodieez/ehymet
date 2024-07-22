@@ -1,201 +1,161 @@
-library(clusterCrit)
-library(tidyverse)
-
-# define the infomax metric for clustering
-infomax_metric <- function(cluster_labels) {
-  # Calculate the frequency of each cluster
-  cluster_freq <- table(cluster_labels)
-
-  # Calculate the total number of data points
-  n <- length(cluster_labels)
-
-  # Calculate the probabilities of each cluster
-  p <- cluster_freq / n
-
-  # Calculate the entropy
-  infomax <- -sum(p * log2(p))
-
-  list(infomax = infomax)
-}
-
-n <- 50
-curves <- sim_model_ex2(n = n, i_sim = 4)
-
+n <- 30
 true_labels <- c(rep(1, n), rep(2, n))
-all_metrics <- data.frame()
-for (combination in generic_vars_combinations(multidimensional = TRUE)) {
-  res <- EHyClus(curves, vars_combinations = list(combination),
-                 true_labels = true_labels, only_best = TRUE)
+global_metrics <- list()
 
-  ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-  all_metrics <- rbind.data.frame(all_metrics, append(
-    res$cluster[[1]]$valid,
-    intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-  ))
-}
-
-curves <- sim_model_ex2(n = n, i_sim = 3)
-for (combination in generic_vars_combinations(multidimensional = TRUE)) {
-  res <- EHyClus(curves, vars_combinations = list(combination),
-                 true_labels = true_labels, only_best = TRUE)
-
-  ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-  all_metrics <- rbind.data.frame(all_metrics, append(
-    res$cluster[[1]]$valid,
-    intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-  ))
-}
-
-all_metrics |>
-  arrange(desc(RI)) |>
-  View()
-
-data.frame(RI = cor(all_metrics)["RI", ])
-
-# In clustering analysis, the trace_WIB can be used to compare different clustering solutions.
-# A clustering solution with a lower trace_WIB is generally preferred as it indicates more compact clusters.
-
-## univRIate ##
-
-n <- 50
-curves <- sim_model_ex1(n = n)
-
-true_labels <- c(rep(1, n), rep(2, n))
-
-all_metrics2 <- data.frame()
-valid_combinations <- list()
-for (combination in generic_vars_combinations(multidimensional = FALSE)) {
-  tryCatch({
-    res <- EHyClus(curves, vars_combinations = list(combination),
-                   true_labels = true_labels, only_best = TRUE)
-
-    ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-    all_metrics2 <- rbind.data.frame(all_metrics2, append(
-      res$cluster[[1]]$valid,
-      intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-    ))
-    valid_combinations <- append(valid_combinations, list(combination))
-
-  },
-  error = function(cond) NA
-  )
-}
-
-curves <- sim_model_ex1(n = n, i_sim = 5)
-for (combination in generic_vars_combinations(multidimensional = FALSE)) {
-  tryCatch({
-    res <- EHyClus(curves, vars_combinations = list(combination),
-                   true_labels = true_labels, only_best = TRUE)
-
-    ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-    all_metrics2 <- rbind.data.frame(all_metrics2, append(
-      res$cluster[[1]]$valid,
-      intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-    ))
-    valid_combinations <- append(valid_combinations, list(combination))
-
-  },
-  error = function(cond) NA
-  )
-}
-
-curves <- sim_model_ex1(n = n, i_sim = 7)
-for (combination in generic_vars_combinations(multidimensional = FALSE)) {
-  tryCatch({
-    res <- EHyClus(curves, vars_combinations = list(combination),
-                   true_labels = true_labels, only_best = TRUE)
-
-    ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-    all_metrics2 <- rbind.data.frame(all_metrics2, append(
-      res$cluster[[1]]$valid,
-      intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-    ))
-    valid_combinations <- append(valid_combinations, list(combination))
-
-  },
-  error = function(cond) NA
-  )
-}
-
-get_metrics_multidimensional <- function(n = 50) {
-  metrics <- data.frame()
-  true_labels <- c(rep(1, n), rep(2, n))
-  for (i_sim in c(3, 4)) {
-    curves <- sim_model_ex2(n = n, i_sim = i_sim)
-    for (combination in generic_vars_combinations(multidimensional = TRUE)) {
-      tryCatch({
-        res <- EHyClus(curves, vars_combinations = list(combination),
-                       true_labels = true_labels, only_best = TRUE)
-
-        ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-        metrics <- rbind.data.frame(metrics, append(
-          res$cluster[[1]]$valid,
-          c(intCriteria(ind_curves, res$cluster[[1]]$cluster, "all"), infomax_metric(res$cluster[[1]]$cluster))
-        ))
-      },
-      error = function(cond) NA
+# ex1
+for (i_sim in seq_len(8)) {
+  for (n_clusters in c(2, 3)) {
+    metrics <- list()
+    for (iter in seq_len(10)) {
+      curves <- sim_model_ex1(n = n, i_sim = i_sim)
+      res <- EHyClus(
+        curves = curves,
+        vars_combinations = generic_vars_combinations(multidimensional = FALSE),
+        true_labels = true_labels,
+        n_clusters = n_clusters
       )
+      metrics[[length(metrics) + 1]] <- res$metrics
     }
+    metrics <- do.call(rbind, metrics)
+    metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
+
+    write.csv(
+      x = metrics,
+      file = paste0("inst/metrics_csv/ex1_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
+
+    write.csv(
+      x = data.frame(ARI = cor(metrics, use = "pairwise.complete.obs")["ARI", ]),
+      file = paste0("inst/metrics_csv/cor_ex1_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
+
+    global_metrics[[length(global_metrics) + 1]] <- metrics
   }
-
-  metrics |>
-    arrange(desc(RI))
 }
 
-## multidimensional
-all_metrics2 <- data.frame()
-valid_combinations <- list()
-curves <- sim_model_ex2(n = n, i_sim = 3)
-for (combination in generic_vars_combinations(multidimensional = TRUE)) {
-  tryCatch({
-    res <- EHyClus(curves, vars_combinations = list(combination),
-                   true_labels = true_labels, only_best = TRUE)
+# ex2 --> i_sim 1 and i_sim 2
+for (i_sim in seq_len(2)) {
+  for (n_clusters in c(2, 3)) {
+    metrics <- list()
+    for (iter in seq_len(10)) {
+      curves <- sim_model_ex2(n = n, i_sim = i_sim)
+      res <- EHyClus(
+        curves = curves,
+        vars_combinations = generic_vars_combinations(multidimensional = FALSE),
+        true_labels = true_labels,
+        n_clusters = n_clusters
+      )
+      metrics[[length(metrics) + 1]] <- res$metrics
+    }
+    metrics <- do.call(rbind, metrics)
+    metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
-    ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-    all_metrics2 <- rbind.data.frame(all_metrics2, append(
-      res$cluster[[1]]$valid,
-      c(intCriteria(ind_curves, res$cluster[[1]]$cluster, "all"), infomax_metric(res$cluster[[1]]$cluster))
-    ))
-    valid_combinations <- append(valid_combinations, list(combination))
+    write.csv(
+      x = metrics,
+      file = paste0("inst/metrics_csv/ex2_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
 
-  },
-  error = function(cond) NA
+    write.csv(
+      x = data.frame(ARI = cor(metrics, use = "pairwise.complete.obs")["ARI", ]),
+      file = paste0("inst/metrics_csv/cor_ex2_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
+
+    global_metrics[[length(global_metrics) + 1]] <- metrics
+  }
+}
+
+# ex2 --> i_sim 3 and i_sim 4
+for (i_sim in 3:4) {
+  for (n_clusters in c(2, 3)) {
+    metrics <- list()
+    for (iter in seq_len(10)) {
+      curves <- sim_model_ex2(n = n, i_sim = i_sim)
+      res <- EHyClus(
+        curves = curves,
+        vars_combinations = generic_vars_combinations(multidimensional = TRUE),
+        true_labels = true_labels,
+        n_clusters = n_clusters
+      )
+      metrics[[length(metrics) + 1]] <- res$metrics
+    }
+    metrics <- do.call(rbind, metrics)
+    metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
+
+    write.csv(
+      x = metrics,
+      file = paste0("inst/metrics_csv/ex2_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
+
+    write.csv(
+      x = data.frame(ARI = cor(metrics, use = "pairwise.complete.obs")["ARI", ]),
+      file = paste0("inst/metrics_csv/cor_ex2_sim", i_sim, "_nclusters", n_clusters, ".csv")
+    )
+
+    global_metrics[[length(global_metrics) + 1]] <- metrics
+  }
+}
+
+# writing global metrics
+global_metrics <- do.call(rbind, global_metrics)
+global_metrics <- global_metrics[order(global_metrics[, "ARI"], decreasing = TRUE), ]
+
+write.csv(
+  x = global_metrics,
+  file = "inst/metrics_csv/global_metrics.csv"
+)
+
+write.csv(
+  x = data.frame(ARI = cor(global_metrics, use = "pairwise.complete.obs")["ARI", ]),
+  file = "inst/metrics_csv/cor_global_metrics.csv"
+)
+
+# separating by clusters
+files <- list.files(path = "inst/metrics_csv")
+two_clusters_files   <- files[grep("^ex.*nclusters2", files)]
+three_clusters_files <- files[grep("^ex.*nclusters3", files)]
+
+two_clusters   <- do.call(rbind, lapply(paste0("inst/metrics_csv/", two_clusters_files), read.csv, row.names = 1))
+three_clusters <- do.call(rbind, lapply(paste0("inst/metrics_csv/", three_clusters_files), read.csv, row.names = 1))
+
+write.csv(
+  x = data.frame(ARI = cor(two_clusters, use = "pairwise.complete.obs")["ARI", ]),
+  file = "inst/metrics_csv/cor_two_clusters.csv"
+)
+
+write.csv(
+  x = data.frame(ARI = cor(three_clusters, use = "pairwise.complete.obs")["ARI", ]),
+  file = "inst/metrics_csv/cor_three_clusters.csv"
+)
+
+## combined ##
+
+true_labels <- c(rep(1, 30), rep(2, 30), rep(3, 15), rep(4, 15))
+global_metrics <- list()
+
+
+metrics <- list()
+for (iter in seq_len(10)) {
+  curves <- rbind(
+    sim_model_ex1(n = 30, i_sim = 1),
+    sim_model_ex1(n = 15, i_sim = 7)
   )
-}
-
-curves <- sim_model_ex2(n = n, i_sim = 4)
-for (combination in generic_vars_combinations(multidimensional = TRUE)) {
-  tryCatch({
-    res <- EHyClus(curves, vars_combinations = list(combination),
-                   true_labels = true_labels, only_best = TRUE)
-
-    ind_curves <- as.matrix(attr(res, "ind_curves")[combination])
-    all_metrics2 <- rbind.data.frame(all_metrics2, append(
-      res$cluster[[1]]$valid,
-      intCriteria(ind_curves, res$cluster[[1]]$cluster, "all")
-    ))
-    valid_combinations <- append(valid_combinations, list(combination))
-
-  },
-  error = function(cond) NA
+  res <- EHyClus(
+    curves = curves,
+    vars_combinations = generic_vars_combinations(multidimensional = FALSE),
+    true_labels = true_labels,
+    n_clusters = 4
   )
+  metrics[[length(metrics) + 1]] <- res$metrics
 }
+metrics <- do.call(rbind, metrics)
+metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
-all_metrics2 |>
-  select(RI, davies_bouldin, dunn, silhouette) |>
-  arrange(desc(RI)) |>
-  View()
+write.csv(
+  x = metrics,
+  file = "inst/metrics_csv/4clusters.csv"
+)
 
-all_metrics2 |>
-  arrange(desc(RI)) |>
-  View()
-
-data.frame(RI = cor(all_metrics)["RI", ])  # mult
-data.frame(RI = cor(all_metrics2)["RI", ]) # uni
-
-data.frame(RI = cor(rbind(all_metrics, all_metrics2))["RI", ])
-
-rbind(all_metrics, all_metrics2) |>
-  select(RI, trace_wib) |>
-  arrange(desc(RI)) |>
-  View()
+write.csv(
+  x = data.frame(ARI = cor(metrics, use = "pairwise.complete.obs")["ARI", ]),
+  file = "inst/metrics_csv/cor_4clusters.csv"
+)

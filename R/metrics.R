@@ -107,7 +107,7 @@ infomax_metric <- function(cluster_labels) {
 
 get_internal_clustering_criteria <- function(traj, part) {
   c(
-    clusterCrit::intCriteria(traj, part, c("Davies_Bouldin", "Dunn", "Silhouette")),
+    clusterCrit::intCriteria(traj, part, "all"),
     list(infomax = infomax_metric(part))
   )
 }

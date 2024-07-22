@@ -200,7 +200,11 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
         methods <- c(methods, method)
         metrics <- rbind(
           metrics,
-          append(cluster[[clustering_method]][[method]][["valid"]], list(Time = cluster[[clustering_method]][[method]][["time"]]))
+          c(
+            cluster[[clustering_method]][[method]][["valid"]],
+            cluster[[clustering_method]][[method]][["internal_metrics"]],
+            list(Time = cluster[[clustering_method]][[method]][["time"]])
+          )
         )
       }
     }
