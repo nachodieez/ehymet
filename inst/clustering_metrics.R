@@ -14,9 +14,16 @@ for (i_sim in seq_len(8)) {
         true_labels = true_labels,
         n_clusters = n_clusters
       )
+
       metrics[[length(metrics) + 1]] <- res$metrics
     }
     metrics <- do.call(rbind, metrics)
+    metrics <- metrics[,-ncol(metrics)]
+
+    metrics <- rbind.data.frame(lapply(metrics, rank))
+    metrics[["combined_rank"]] <- rank(rowSums(metrics[,-c(1,2,3,4)]))
+    metrics[["combined_rank2"]] <- rank(rowSums(metrics[,-c(1,2,3,4,5,6)]))
+
     metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
     write.csv(
@@ -48,6 +55,12 @@ for (i_sim in seq_len(2)) {
       metrics[[length(metrics) + 1]] <- res$metrics
     }
     metrics <- do.call(rbind, metrics)
+    metrics <- metrics[,-ncol(metrics)]
+
+    metrics <- rbind.data.frame(lapply(metrics, rank))
+    metrics[["combined_rank"]] <- rank(rowSums(metrics[,-c(1,2,3,4)]))
+    metrics[["combined_rank2"]] <- rank(rowSums(metrics[,-c(1,2,3,4,5,6)]))
+
     metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
     write.csv(
@@ -79,6 +92,12 @@ for (i_sim in 3:4) {
       metrics[[length(metrics) + 1]] <- res$metrics
     }
     metrics <- do.call(rbind, metrics)
+    metrics <- metrics[,-ncol(metrics)]
+
+    metrics <- rbind.data.frame(lapply(metrics, rank))
+    metrics[["combined_rank"]] <- rank(rowSums(metrics[,-c(1,2,3,4)]))
+    metrics[["combined_rank2"]] <- rank(rowSums(metrics[,-c(1,2,3,4,5,6)]))
+
     metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
     write.csv(
@@ -97,6 +116,12 @@ for (i_sim in 3:4) {
 
 # writing global metrics
 global_metrics <- do.call(rbind, global_metrics)
+global_metrics <- global_metrics[,-ncol(global_metrics)]
+
+global_metrics <- rbind.data.frame(lapply(global_metrics, rank))
+global_metrics[["combined_rank"]] <- rank(rowSums(global_metrics[,-c(1,2,3,4)]))
+global_metrics[["combined_rank2"]] <- rank(rowSums(global_metrics[,-c(1,2,3,4,5,6)]))
+
 global_metrics <- global_metrics[order(global_metrics[, "ARI"], decreasing = TRUE), ]
 
 write.csv(
@@ -111,10 +136,10 @@ write.csv(
 
 # separating by clusters
 files <- list.files(path = "inst/metrics_csv")
-two_clusters_files   <- files[grep("^ex.*nclusters2", files)]
+two_clusters_files <- files[grep("^ex.*nclusters2", files)]
 three_clusters_files <- files[grep("^ex.*nclusters3", files)]
 
-two_clusters   <- do.call(rbind, lapply(paste0("inst/metrics_csv/", two_clusters_files), read.csv, row.names = 1))
+two_clusters <- do.call(rbind, lapply(paste0("inst/metrics_csv/", two_clusters_files), read.csv, row.names = 1))
 three_clusters <- do.call(rbind, lapply(paste0("inst/metrics_csv/", three_clusters_files), read.csv, row.names = 1))
 
 write.csv(
@@ -130,7 +155,6 @@ write.csv(
 ## combined ##
 
 true_labels <- c(rep(1, 30), rep(2, 30), rep(3, 15), rep(4, 15))
-global_metrics <- list()
 
 
 metrics <- list()
@@ -148,6 +172,12 @@ for (iter in seq_len(10)) {
   metrics[[length(metrics) + 1]] <- res$metrics
 }
 metrics <- do.call(rbind, metrics)
+metrics <- metrics[,-ncol(metrics)]
+
+metrics <- rbind.data.frame(lapply(metrics, rank))
+metrics[["combined_rank"]] <- rank(rowSums(metrics[,-c(1,2,3,4)]))
+metrics[["combined_rank2"]] <- rank(rowSums(metrics[,-c(1,2,3,4,5,6)]))
+
 metrics <- metrics[order(metrics[, "ARI"], decreasing = TRUE), ]
 
 write.csv(
