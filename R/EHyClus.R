@@ -1,126 +1,55 @@
-#' Clustering using Epigraph and Hypograph indices
+#' Clustering using raw data
 #'
-#' It creates a multivariate dataset containing
-#' the epigraph, hypograph and/or its modified versions on the curves and derivatives
-#' and then perform hierarchical clustering, kmeans, kernel kmeans, and spectral clustering
+#' It performs hierarchical clustering, kmeans, kernel kmeans, and spectral clustering
+#' on the raw input data and computes performance metrics.
 #'
-#' @param curves Dataset containing the curves to apply a clustering algorithm.
-#' The functional dataset can be one dimensional (\eqn{n \times p}) where \eqn{n} is the number of
-#' curves and \code{p} the number of time points, or multidimensional (\eqn{n \times p \times q}) where \eqn{q}
+#' @param data Dataset containing the data to apply clustering algorithms.
+#' The dataset can be one dimensional (\eqn{n \times p}) where \eqn{n} is the number of
+#' data points and \code{p} the number of features, or multidimensional (\eqn{n \times p \times q}) where \eqn{q}
 #' represents the number of dimensions in the data
-#' @param vars_combinations If \code{list},  each element of the list should be an
-#' atomic \code{vector} of strings with the
-#' names of the variables. Combinations with non-valid variable names will be discarded.
-#' If the list is non-named, the names of the variables are set to
-#' vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.
-#' If not provided, generic combinations of variables will be used. They will not be
-#' the same for uni-dimensional and multi-dimensional problems.
 #' @param clustering_methods character vector specifying at least one of the following
 #' clustering methods to be computed: "hierarch", "kmeans", "kkmeans" or "spc".
-#' @param k Number of basis functions for the B-splines. If equals to \code{0}, the number
-#' of basis functions will be automatically selected.
-#' @param bs A two letter character string indicating the (penalized) smoothing
-#' basis to use. See \code{\link{smooth.terms}}.
 #' @param l_method_hierarch \code{list} of clustering methods for hierarchical
 #' clustering.
 #' @param l_dist_hierarch \code{list} of distances for hierarchical clustering.
 #' @param l_dist_kmeans \code{list} of distances for kmeans clustering.
 #' @param l_kernel \code{list} of kernels for kkmeans or spc.
-#' @param grid Atomic vector of type numeric with two elements: the lower limit and the upper
-#' limit of the evaluation grid. If not provided, it will be selected automatically.
 #' @param n_clusters Number of clusters to generate.
 #' @param true_labels Numeric vector of true labels for validation. If provided,
 #' evaluation metrics are computed in the final result.
 #' @param only_best \code{logical} value. If \code{TRUE} and \code{true_labels}
 #' is provided, the function will return only the result for the best clustering
 #' method based on the Rand Index. Defaults to \code{FALSE}.
-#' @param verbose If \code{TRUE}, the function will print logs for about the execution of
+#' @param verbose If \code{TRUE}, the function will print logs about the execution of
 #' some clustering methods. Defaults to \code{FALSE}.
 #' @param n_cores Number of cores to do parallel computation. 1 by default,
-#' which mean no parallel execution. Must be an integer number greater than 1.
+#' which means no parallel execution. Must be an integer number greater than or equal to 1.
 #'
-#' @return A \code{list} containing the clustering partition for each method and indices
-#' combination and, if \code{true_labels} is provided a data frame containing the time elapsed for obtaining a
-#' clustering partition of the indices dataset for each methodology. Also, the number of
-#' generated clusters and the combinations of variables used can be seen as attributes
-#' of this object.
-#'
-#' @examples
-#' # univarariate data without labels
-#' curves <- sim_model_ex1(n = 10)
-#' vars_combinations <- list(c("dtaEI", "dtaMEI"), c("dtaHI", "dtaMHI"))
-#' EHyClus(curves, vars_combinations = vars_combinations)
-#'
-#' # multivariate data with labels
-#' curves <- sim_model_ex2(n = 5)
-#' true_labels <- c(rep(1, 5), rep(2, 5))
-#' vars_combinations <- list(c("dtaMEI", "ddtaMEI"), c("dtaMEI", "d2dtaMEI"))
-#' res <- EHyClus(curves, vars_combinations = vars_combinations, true_labels = true_labels)
-#' res$cluster # clustering results
-#'
-#' # multivariate data and generic (default) vars_combinations
-#' curves <- sim_model_ex2(n = 5)
-#' EHyClus(curves)
+#' @return A \code{list} containing the clustering partition for each method and,
+#' if \code{true_labels} is provided, a data frame containing the time elapsed and
+#' performance metrics for each clustering methodology.
 #'
 #' @export
-EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr",
+EHyClus <- function(data, n_clusters = 2,
                     clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
                     l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
                     l_dist_hierarch = c("euclidean", "manhattan"),
                     l_dist_kmeans = c("euclidean", "mahalanobis"),
                     l_kernel = c("rbfdot", "polydot"),
-                    grid,
                     true_labels = NULL, only_best = FALSE, verbose = FALSE, n_cores = 1) {
-  if (length(dim(curves)) > 3 || length(dim(curves)) < 2) {
-    stop("'curves' should be 2-dimensional or 3-dimensional", call. = FALSE)
+  if (!is.data.frame(data)) {
+    data <- as.data.frame(data)
   }
 
-  if (!missing(vars_combinations) && !is.list(vars_combinations) && !is.numeric(vars_combinations)) {
-    stop("input 'vars_combinations' must be a list", call. = FALSE)
+  if (!is.null(true_labels) && length(true_labels) != nrow(data)) {
+    stop("'true labels' should have the same length as the number of data points", call. = FALSE)
   }
-
-  if (!missing(vars_combinations) && is.list(vars_combinations) && !length(vars_combinations)) {
-    stop("input 'vars_combinations' is an empty list", call. = FALSE)
-  }
-
-  if (!is.null(true_labels) && length(true_labels) != dim(curves)[1]) {
-    stop("'true labels' should have the same length as the number of curves", call. = FALSE)
-  }
-
-  if (!is.numeric(k) || k %% 1 != 0) {
-    stop("'k' should be an integer number", call. = FALSE)
-  }
-
-  if (!missing(grid)) {
-    if (length(grid) != 2 && !is.numeric(grid)) {
-      stop("'grid' should be a numeric atomic vector with two elements", call. = FALSE)
-    } else if (diff(grid) <= 0) {
-      stop("the second element of 'grid' should be greater than the first one", call. = FALSE)
-    } else if (grid[1] < 1) {
-      stop("the first element of 'grid' should be equal or greater than one", call. = FALSE)
-    }
-  }
-
-  if (missing(vars_combinations)) {
-    vars_combinations <-
-      generic_vars_combinations(length(dim(curves)) == 3)
-  }
-
-  # list that maps each clustering method to its corresponding function
-  default_clustering_methods <- list(
-    "hierarch" = clustInd_hierarch,
-    "kmeans"   = clustInd_kmeans,
-    "kkmeans"  = clustInd_kkmeans,
-    "spc"      = clustInd_spc
-  )
-
   # Constants definition
   METHOD_HIERARCH <- c("single", "complete", "average", "centroid", "ward.D2")
   DIST_HIERARCH <- c("euclidean", "manhattan")
   DIST_KMEANS <- c("euclidean", "mahalanobis")
   KERNEL <- c("rbfdot", "polydot")
-  METHOD_SVC <- c("kmeans", "kernkmeans")
-  CLUSTERING_METHODS <- names(default_clustering_methods)
+  CLUSTERING_METHODS <- c("hierarch", "kmeans", "kkmeans", "spc")
 
   check_list_parameter(clustering_methods, CLUSTERING_METHODS, "clustering_method")
   check_list_parameter(l_method_hierarch, METHOD_HIERARCH, "l_method_hierarch")
@@ -130,58 +59,22 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
 
   n_cores <- check_n_cores(n_cores)
 
-  # Generate the dataset with the indices
-
-  generate_indices_parameters <- list(
-    curves  = curves,
-    k       = k,
-    bs      = bs,
-    indices = c("EI", "HI", "MEI", "MHI")
-  )
-
-  if (k) {
-    generate_indices_parameters[["k"]] <- k
-  }
-
-  if (!missing(grid)) {
-    generate_indices_parameters[["grid"]] <- grid
-  }
-
-  ind_curves <- do.call(generate_indices, generate_indices_parameters)
-
-  # Check for correct vars combinations
-  vars_combinations_to_remove <- check_vars_combinations(vars_combinations, ind_curves)
-
-  if (length(vars_combinations_to_remove)) {
-    vars_combinations <- vars_combinations[-vars_combinations_to_remove]
-  }
-
-
-  # common arguments for all the clustering methods that are implemented
-  # in the package
-  common_clustering_arguments <- list(
-    "ind_data"          = ind_curves,
-    "vars_combinations" = vars_combinations,
-    "n_cluster"         = n_clusters,
-    "true_labels"       = true_labels,
-    "n_cores"           = n_cores
-  )
-
+  # Perform clustering
   cluster <- list()
   for (method in clustering_methods) {
     method_args <- switch(method,
-      "hierarch" = append(common_clustering_arguments, list(method_list = l_method_hierarch, dist_vector = l_dist_hierarch)),
-      "kmeans"   = append(common_clustering_arguments, list(dist_vector = l_dist_kmeans)),
-      "kkmeans"  = append(common_clustering_arguments, list(kernel_list = l_kernel)),
-      "spc"      = append(common_clustering_arguments, list(kernel_list = l_kernel))
+                          "hierarch" = list(ind_data = data, vars_combinations = list(colnames(data)), n_cluster = n_clusters, method_list = l_method_hierarch, dist_vector = l_dist_hierarch, true_labels = true_labels, n_cores = n_cores),
+                          "kmeans"   = list(ind_data = data, vars_combinations = list(colnames(data)), n_cluster = n_clusters, dist_vector = l_dist_kmeans, true_labels = true_labels, n_cores = n_cores),
+                          "kkmeans"  = list(ind_data = data, vars_combinations = list(colnames(data)), n_cluster = n_clusters, kernel_list = l_kernel, true_labels = true_labels, n_cores = n_cores),
+                          "spc"      = list(ind_data = data, vars_combinations = list(colnames(data)), n_cluster = n_clusters, kernel_list = l_kernel, true_labels = true_labels, n_cores = n_cores)
     )
 
     cluster_res <- tryCatch(
       {
         if (verbose) {
-          do.call(default_clustering_methods[[method]], method_args)
+          do.call(get(paste0("clustInd_", method)), method_args)
         } else {
-          suppressMessages(quiet(do.call(default_clustering_methods[[method]], method_args)))
+          suppressMessages(quiet(do.call(get(paste0("clustInd_", method)), method_args)))
         }
       },
       error = function(x) NA
@@ -200,7 +93,11 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
         methods <- c(methods, method)
         metrics <- rbind(
           metrics,
-          append(cluster[[clustering_method]][[method]][["valid"]], list(Time = cluster[[clustering_method]][[method]][["time"]]))
+          c(
+            cluster[[clustering_method]][[method]][["valid"]],
+            cluster[[clustering_method]][[method]][["internal_metrics"]],
+            list(Time = cluster[[clustering_method]][[method]][["time"]])
+          )
         )
       }
     }
@@ -230,7 +127,6 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
   class(result) <- c("EHyClus", class(result))
 
   attr(result, "n_clusters") <- n_clusters
-  attr(result, "vars_combinations") <- vars_combinations
 
   result
 }
@@ -275,7 +171,7 @@ check_vars_combinations <- function(vars_combinations, ind_curves) {
       next
     }
 
-    if (det(stats::var(ind_curves[, vars_combinations[[i]]])) == 0) {
+    if (det(stats::var(ind_curves[, vars_combinations[[i]]], na.rm = TRUE)) == 0) {
       vars_combinations_to_remove <- c(vars_combinations_to_remove, i)
       vars_almost_singular <- c(vars_almost_singular, i)
     }
