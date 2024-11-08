@@ -13,6 +13,7 @@
 #' names of the variables. Combinations with non-valid variable names will be discarded.
 #' If the list is non-named, the names of the variables are set to
 #' vars1, ..., varsk, where k is the number of elements in \code{vars_combinations}.
+#' If "auto" is provided, an unique combination of variable will be found.
 #' If not provided, generic combinations of variables will be used. They will not be
 #' the same for uni-dimensional and multi-dimensional problems.
 #' @param clustering_methods character vector specifying at least one of the following
@@ -26,8 +27,6 @@
 #' @param l_dist_hierarch \code{list} of distances for hierarchical clustering.
 #' @param l_dist_kmeans \code{list} of distances for kmeans clustering.
 #' @param l_kernel \code{list} of kernels for kkmeans or spc.
-#' @param grid Atomic vector of type numeric with two elements: the lower limit and the upper
-#' limit of the evaluation grid. If not provided, it will be selected automatically.
 #' @param n_clusters Number of clusters to generate.
 #' @param true_labels Numeric vector of true labels for validation. If provided,
 #' evaluation metrics are computed in the final result.
@@ -69,18 +68,26 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
                     l_dist_hierarch = c("euclidean", "manhattan"),
                     l_dist_kmeans = c("euclidean", "mahalanobis"),
                     l_kernel = c("rbfdot", "polydot"),
-                    grid,
                     true_labels = NULL, only_best = FALSE, verbose = FALSE, n_cores = 1) {
+  if (missing(vars_combinations)) {
+    vars_combinations <-
+      generic_vars_combinations(length(dim(curves)) == 3)
+  }
+
   if (length(dim(curves)) > 3 || length(dim(curves)) < 2) {
     stop("'curves' should be 2-dimensional or 3-dimensional", call. = FALSE)
   }
 
-  if (!missing(vars_combinations) && !is.list(vars_combinations) && !is.numeric(vars_combinations)) {
-    stop("input 'vars_combinations' must be a list", call. = FALSE)
+  if (!missing(vars_combinations) && !is.list(vars_combinations) && !is.character(vars_combinations)) {
+    stop("input 'vars_combinations' must be a list or 'auto'", call. = FALSE)
   }
 
   if (!missing(vars_combinations) && is.list(vars_combinations) && !length(vars_combinations)) {
     stop("input 'vars_combinations' is an empty list", call. = FALSE)
+  }
+
+  if (is.character(vars_combinations) && vars_combinations != "auto") {
+    stop("input 'vars_combinations' must be a list or 'auto'", call. = FALSE)
   }
 
   if (!is.null(true_labels) && length(true_labels) != dim(curves)[1]) {
@@ -89,21 +96,6 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
 
   if (!is.numeric(k) || k %% 1 != 0) {
     stop("'k' should be an integer number", call. = FALSE)
-  }
-
-  if (!missing(grid)) {
-    if (length(grid) != 2 && !is.numeric(grid)) {
-      stop("'grid' should be a numeric atomic vector with two elements", call. = FALSE)
-    } else if (diff(grid) <= 0) {
-      stop("the second element of 'grid' should be greater than the first one", call. = FALSE)
-    } else if (grid[1] < 1) {
-      stop("the first element of 'grid' should be equal or greater than one", call. = FALSE)
-    }
-  }
-
-  if (missing(vars_combinations)) {
-    vars_combinations <-
-      generic_vars_combinations(length(dim(curves)) == 3)
   }
 
   # list that maps each clustering method to its corresponding function
@@ -136,26 +128,27 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
     curves  = curves,
     k       = k,
     bs      = bs,
-    indices = c("EI", "HI", "MEI", "MHI")
+    indices = c("EI", "HI", "MEI", "MHI"),
+    n_cores = n_cores
   )
 
   if (k) {
     generate_indices_parameters[["k"]] <- k
   }
 
-  if (!missing(grid)) {
-    generate_indices_parameters[["grid"]] <- grid
+  if (!is.list(vars_combinations) && vars_combinations == "auto") {
+    ind_curves <- select_var_ind(do.call(generate_indices, generate_indices_parameters))
+    vars_combinations <- list(names(ind_curves))
+  } else {
+    ind_curves <- do.call(generate_indices, generate_indices_parameters)
+
+    # Check for correct vars combinations
+    vars_combinations_to_remove <- check_vars_combinations(vars_combinations, ind_curves)
+
+    if (length(vars_combinations_to_remove)) {
+      vars_combinations <- vars_combinations[-vars_combinations_to_remove]
+    }
   }
-
-  ind_curves <- do.call(generate_indices, generate_indices_parameters)
-
-  # Check for correct vars combinations
-  vars_combinations_to_remove <- check_vars_combinations(vars_combinations, ind_curves)
-
-  if (length(vars_combinations_to_remove)) {
-    vars_combinations <- vars_combinations[-vars_combinations_to_remove]
-  }
-
 
   # common arguments for all the clustering methods that are implemented
   # in the package
