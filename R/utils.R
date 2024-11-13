@@ -9,11 +9,12 @@
 #' of basis functions will be automatically selected.
 #' @param bs A two letter character string indicating the (penalized) smoothing
 #' basis to use. See \code{\link{smooth.terms}}.
+#' @param ... Additional arguments for tfb. See \code{\link{tfb}}.
 #'
 #' @return A list containing smoothed data, first and second derivatives
 #'
 #' @noRd
-funspline <- function(curves, k, bs = "cr") {
+funspline <- function(curves, k, bs = "cr", ...) {
   curves_dim <- length(dim(curves))
 
   tfb_params <- list(bs = bs)
@@ -24,6 +25,7 @@ funspline <- function(curves, k, bs = "cr") {
 
   if (curves_dim == 2) {
     tfb_params[["data"]] <- curves
+    tfb_params <- c(tfb_params, list(...))
 
     ys <- suppressMessages(do.call(tf::tfb, tfb_params))
 
@@ -45,6 +47,7 @@ funspline <- function(curves, k, bs = "cr") {
 
     for (d in seq_len(dim(curves)[3])) {
       tfb_params[["data"]] <- curves[, , d]
+      tfb_params <- c(tfb_params, list(...))
 
       # Smooth data using B-spline basis
       ys <- suppressMessages(do.call(tf::tfb, tfb_params))
