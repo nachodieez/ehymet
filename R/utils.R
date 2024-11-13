@@ -23,9 +23,9 @@ funspline <- function(curves, k, bs = "cr", ...) {
     tfb_params[["k"]] <- k
   }
 
+  tfb_params <- c(tfb_params, list(...))
   if (curves_dim == 2) {
     tfb_params[["data"]] <- curves
-    tfb_params <- c(tfb_params, list(...))
 
     ys <- suppressMessages(do.call(tf::tfb, tfb_params))
 
@@ -47,7 +47,6 @@ funspline <- function(curves, k, bs = "cr", ...) {
 
     for (d in seq_len(dim(curves)[3])) {
       tfb_params[["data"]] <- curves[, , d]
-      tfb_params <- c(tfb_params, list(...))
 
       # Smooth data using B-spline basis
       ys <- suppressMessages(do.call(tf::tfb, tfb_params))
