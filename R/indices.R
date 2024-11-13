@@ -271,28 +271,42 @@ MHI.default <- function(curves, ...) {
 #' any between EI, HI, MEI and MHI.
 #' @param n_cores Number of cores to do parallel computation. 1 by default,
 #' which mean no parallel execution. Must be an integer number greater than 1.
-#' @param ... Additional arguments (unused)
+#' @param ... Additional arguments for tfb. See \code{\link{tfb}}.
 #'
 #' @return A dataframe containing the indices provided in \code{indices} for
 #' original data, first and second derivatives
 #' @export
 #'
 #' @examples
+#' # 3-dimensional array
 #' x1 <- array(c(1, 2, 3, 3, 2, 1, 5, 2, 3, 9, 8, 7, -1, -5, -6, 2, 3, 0, -1, 0, 2, -1, -2, 0),
 #'   dim = c(3, 4, 2)
 #' )
 #' generate_indices(x1, k = 4)
 #'
+#' # matrix
 #' x2 <- matrix(c(1, 2, 3, 3, 2, 1, 5, 2, 3, 9, 8, 7), nrow = 3, ncol = 4)
 #' generate_indices(x2, k = 4)
 #'
+#' # using additional parameter for tfb
+#' curves <- sim_model_ex1(n = 10)
+#' generate_indices(
+#'   curves = curves,
+#'   k = 20,
+#'   bs = "bs",
+#'   m = c(3,2),        # additional parameter for tfb
+#'   penalized = FALSE  # additional parameter for tfb
+#' )
+#'
 #' @export
-generate_indices <- function(curves,
-                             k,
-                             bs = "cr",
-                             indices = c("EI", "HI", "MEI", "MHI"),
-                             n_cores = 1,
-                             ...) {
+generate_indices <- function(
+  curves,
+  k,
+  bs = "cr",
+  indices = c("EI", "HI", "MEI", "MHI"),
+  n_cores = 1,
+  ...
+) {
   # define indices constant
   INDICES <- c("EI", "HI", "MEI", "MHI")
   curves_dim <- length(dim(curves))
@@ -312,6 +326,8 @@ generate_indices <- function(curves,
   if (!missing(k)) {
     funspline_parameters[["k"]] <- k
   }
+
+  funspline_parameters <- c(funspline_parameters, list(...))
 
   fun_data <- do.call(funspline, funspline_parameters)
 

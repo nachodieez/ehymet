@@ -18,7 +18,8 @@ EHyClus(
   true_labels = NULL,
   only_best = FALSE,
   verbose = FALSE,
-  n_cores = 1
+  n_cores = 1,
+  ...
 )
 }
 \arguments{
@@ -68,6 +69,8 @@ some clustering methods. Defaults to \code{FALSE}.}
 
 \item{n_cores}{Number of cores to do parallel computation. 1 by default,
 which mean no parallel execution. Must be an integer number greater than 1.}
+
+\item{...}{Additional arguments for tfb. See \code{\link{tfb}}.}
 }
 \value{
 A \code{list} containing the clustering partition for each method and indices

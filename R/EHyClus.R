@@ -37,6 +37,7 @@
 #' some clustering methods. Defaults to \code{FALSE}.
 #' @param n_cores Number of cores to do parallel computation. 1 by default,
 #' which mean no parallel execution. Must be an integer number greater than 1.
+#' @param ... Additional arguments for tfb. See \code{\link{tfb}}.
 #'
 #' @return A \code{list} containing the clustering partition for each method and indices
 #' combination and, if \code{true_labels} is provided a data frame containing the time elapsed for obtaining a
@@ -62,13 +63,23 @@
 #' EHyClus(curves)
 #'
 #' @export
-EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr",
-                    clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
-                    l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
-                    l_dist_hierarch = c("euclidean", "manhattan"),
-                    l_dist_kmeans = c("euclidean", "mahalanobis"),
-                    l_kernel = c("rbfdot", "polydot"),
-                    true_labels = NULL, only_best = FALSE, verbose = FALSE, n_cores = 1) {
+EHyClus <- function(
+  curves,
+  vars_combinations,
+  k = 30,
+  n_clusters = 2,
+  bs = "cr",
+  clustering_methods = c("hierarch", "kmeans", "kkmeans", "spc"),
+  l_method_hierarch = c("single", "complete", "average", "centroid", "ward.D2"),
+  l_dist_hierarch = c("euclidean", "manhattan"),
+  l_dist_kmeans = c("euclidean", "mahalanobis"),
+  l_kernel = c("rbfdot", "polydot"),
+  true_labels = NULL,
+  only_best = FALSE,
+  verbose = FALSE,
+  n_cores = 1,
+  ...
+) {
   if (missing(vars_combinations)) {
     vars_combinations <-
       generic_vars_combinations(length(dim(curves)) == 3)
@@ -135,6 +146,8 @@ EHyClus <- function(curves, vars_combinations, k = 30, n_clusters = 2, bs = "cr"
   if (k) {
     generate_indices_parameters[["k"]] <- k
   }
+
+  generate_indices_parameters <- c(generate_indices_parameters, list(...))
 
   if (!is.list(vars_combinations) && vars_combinations == "auto") {
     ind_curves <- select_var_ind(do.call(generate_indices, generate_indices_parameters))
