@@ -1,0 +1,25 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "Clustering multivariate functional data using the epigraph and hypograph indices: a case study on Madrid air quality",
+  author   = c(person(given = "Belén", family = "Pulido"),
+               person(given = "Alba M.", family = "Franco-Pereira"),
+               person(given = "Rosa E.", family = "Lillo")),
+  journal  = "arXiv",
+  year     = "2024",
+  number   = "2037.16720",
+  doi      = "10.48550/arXiv.2307.16720"
+)
+
+bibentry(
+  bibtype = "Article",
+  title   = "A fast epigraph and hypograph-based approach for clustering functional data",
+  author  = c(person(given = "Belén", family = "Pulido"),
+             person(given = "Alba M.", family = "Franco-Pereira"),
+             person(given = "Rosa E.", family = "Lillo")),
+  journal = "Statistics and Computing",
+  month   = "February",
+  year    = "2023",
+  volume  = "33",
+  number  = "36",
+  doi     = "10.1007/s11222-023-10213-7"
+)
