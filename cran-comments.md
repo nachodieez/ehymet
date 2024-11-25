@@ -7,9 +7,9 @@ Implements methods for functional data analysis based on the epigraph and hypogr
 -   macOS-latest (release and R devel), macOS-latest-arm64 (release and R devel), windows-latest (release and R devel), ubuntu-latest (R devel, release, oldrel)
 -   win-builder (release, R devel)
 
+
 ## About the possibly misspelled words in DESCRIPTION
 
 - Pulido: This is author's surname.
 - al and et: These are part of the commonly used citation format "et al.".
-
 
