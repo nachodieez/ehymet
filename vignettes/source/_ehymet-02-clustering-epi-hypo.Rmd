@@ -74,8 +74,11 @@ All the parameters and its functionality can be found on the function
 documentation, but arguably the most important ones are:
 
 -   **curves**: The dataset containing the curves to be clustered.
--   **vars_combinations**: List that determines the combination of variables
-    to use. If not provided, generic combinations of variables will be used.
+-   **vars_combinations**: This parameter can be provided or not. In case it is
+    provided, it can be a list that determines the combination of variables
+    to use or "auto", where a one combination of data and indices is set trying 
+    to optimize the results. If not provided, a default list with generic 
+    combinations of variables is used.
 -   **clustering_methods**: A vector specifying which clustering methods to
     apply.
 -   **n_clusters** Number of clusters to generate.
@@ -219,7 +222,7 @@ clustering method.
 
 ## Automatic variable selection
 
-When `vars_combinations = "auto"` is provided, `EHyClus` will automatically
+When `vars_combinations = "auto"`, `EHyClus` will automatically
 select an optimal combination of variables through a data-driven approach.
 This process works is comprised of two main steps:
 
