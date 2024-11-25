@@ -11,3 +11,5 @@ Implements methods for functional data analysis based on the epigraph and hypogr
 
 - Pulido: This is author's surname.
 - al and et: These are part of the commonly used citation format "et al.".
+
+
